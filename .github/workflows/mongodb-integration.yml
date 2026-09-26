@@ -1,0 +1,36 @@
+name: MongoDB integration
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mongodb-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mongodb:
+        image: mongo:8.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DBTRANSFER_MONGODB_CONNECTION: mongodb://localhost:27017
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore dependencies
+        run: dotnet restore DbTransfer.slnx
+      - name: Run MongoDB integration tests
+        run: dotnet test DbTransfer.slnx --configuration Release --no-restore --filter Category=MongoDbIntegration

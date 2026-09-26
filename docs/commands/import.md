@@ -22,8 +22,8 @@ Copyright (C) 2026 DbTransfer
   --format                    (Default: jsonl) Input format: csv, json, jsonl,
                               or extended-json.
 
-  --destination-provider      Required. Destination provider: postgresql,
-                              sqlserver, mysql, or oracle.
+  --destination-provider      Required. Destination provider (SQL, cosmosdb,
+                              mongodb, or azure-table-storage).
 
   --destination-connection    Required. Destination database connection string.
 

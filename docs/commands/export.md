@@ -17,13 +17,13 @@ See the [export guide](../guides/export.md) for a walkthrough, practical example
 DbTransfer <version>
 Copyright (C) 2026 DbTransfer
 
-  --provider              Required. Source provider: postgresql, sqlserver,
-                          mysql, or oracle.
+  --provider              Required. Source provider (SQL, cosmosdb, mongodb, or
+                          azure-table-storage).
 
   --connection            Required. Source database connection string.
 
-  --query                 Required. Source SQL query; it is executed without
-                          rewriting.
+  --query                 Required. SQL, or a document-provider location|query
+                          expression; never rewritten.
 
   --output                (Default: -) Output file, or '-' for stdout.
 

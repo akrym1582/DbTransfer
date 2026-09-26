@@ -9,7 +9,7 @@ public sealed class DatabaseSourceConnector(
     string connectionString,
     string query,
     int batchSize,
-    long maxBatchBytes) : ISourceConnector, IAsyncDisposable
+    long maxBatchBytes) : IDatabaseSource
 {
     private DbConnection? connection;
     private DbCommand? command;

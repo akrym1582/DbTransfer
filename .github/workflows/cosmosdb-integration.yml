@@ -1,0 +1,52 @@
+name: Cosmos DB integration
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cosmosdb-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      cosmosdb:
+        image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest
+        env:
+          AZURE_COSMOS_EMULATOR_PARTITION_COUNT: "1"
+          AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE: "false"
+        ports:
+          - 8081:8081
+          - 10250:10250
+          - 10251:10251
+          - 10252:10252
+          - 10253:10253
+          - 10254:10254
+          - 10255:10255
+        options: >-
+          --privileged
+          --health-cmd "curl --insecure --fail https://localhost:8081/_explorer/emulator.pem --output /dev/null"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 30
+          --health-start-period 30s
+    env:
+      DBTRANSFER_COSMOSDB_CONNECTION: AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Trust Cosmos DB emulator certificate
+        run: |
+          curl --insecure --fail https://localhost:8081/_explorer/emulator.pem --output cosmos-emulator.crt
+          sudo cp cosmos-emulator.crt /usr/local/share/ca-certificates/
+          sudo update-ca-certificates
+      - name: Restore dependencies
+        run: dotnet restore DbTransfer.slnx
+      - name: Run Cosmos DB integration tests
+        run: dotnet test DbTransfer.slnx --configuration Release --no-restore --filter Category=CosmosDbIntegration

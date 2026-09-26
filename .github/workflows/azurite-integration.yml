@@ -1,0 +1,42 @@
+name: Azurite integration
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  azurite-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      azurite:
+        image: mcr.microsoft.com/azure-storage/azurite:3.35.0
+        ports:
+          - 10000:10000
+          - 10001:10001
+          - 10002:10002
+    env:
+      DBTRANSFER_AZURITE_CONNECTION: UseDevelopmentStorage=true
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Wait for Azurite
+        run: |
+          for attempt in {1..30}; do
+            if curl --silent --output /dev/null http://localhost:10002/; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+      - name: Restore dependencies
+        run: dotnet restore DbTransfer.slnx
+      - name: Run Azure Table Storage integration tests
+        run: dotnet test DbTransfer.slnx --configuration Release --no-restore --filter Category=AzureTableStorageIntegration

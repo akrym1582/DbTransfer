@@ -1,6 +1,6 @@
 # DbTransfer
 
-`DbTransfer` is a .NET 10 command-line application for streaming data between databases and files. The repository contains a provider-neutral transfer foundation, streaming CSV, JSON-array, JSONL, and Extended JSON support, SQL identifier dialects, and live PostgreSQL, SQL Server, MySQL, and Oracle import, export, and database-to-database copying.
+`DbTransfer` is a .NET 10 command-line application for streaming data between databases and files. The repository contains a provider-neutral transfer foundation, streaming CSV, JSON-array, JSONL, and Extended JSON support, SQL identifier dialects, and live PostgreSQL, SQL Server, MySQL, Oracle, Azure Cosmos DB for NoSQL, MongoDB, and Azure Table Storage import, export, and database-to-database copying.
 
 ## Status
 
@@ -17,6 +17,7 @@ Implemented:
 - Implemented `copy`, `export`, `import`, `exec`, `inspect`, and `validate` commands.
 - Streaming ADO.NET sources for PostgreSQL, SQL Server, MySQL, and Oracle.
 - Native PostgreSQL binary COPY, SQL Server bulk copy, MySQL bulk copy, and Oracle array binding.
+- Streaming document reads and bounded bulk writes for Cosmos DB, MongoDB, and Azure Table Storage.
 - Optional destination table creation, column mapping, batch/all/no transaction scopes, atomic checkpoints, and batch-based resume.
 
 All commands accept `--log-file` (with `{Date}`, `{UtcDate}`, and `{ProcessId}` placeholders) or `--log-directory`. Logs roll daily and `--log-retention-days` controls automatic cleanup. Transfers report progress to stderr and the log approximately every 10,000 records by default, followed by final counts and elapsed time; use `--progress-interval` to change or disable the interval.
@@ -32,7 +33,10 @@ src/DbTransfer/                         # the single production project
 │   ├── PostgreSql/                     # PostgreSQL-only implementation
 │   ├── SqlServer/                      # Microsoft SQL Server-only implementation
 │   ├── Oracle/                         # Oracle-only implementation
-│   └── MySql/                          # MySQL-only implementation
+│   ├── MySql/                          # MySQL-only implementation
+│   ├── CosmosDb/                       # Azure Cosmos DB for NoSQL
+│   ├── MongoDb/                        # MongoDB
+│   └── AzureTableStorage/              # Azure Table Storage
 └── Formats/                            # file and standard-stream formats
 tests/DbTransfer.Tests/                 # separate xUnit test project
 .agents/skills/dbtransfer-development/  # repository development workflow skill
@@ -61,6 +65,12 @@ The test suite also contains a PostgreSQL integration test. Set
 variable is absent, the test is a no-op. GitHub Actions supplies this variable from its
 PostgreSQL service container and runs the integration test automatically with the rest of
 the suite.
+
+Provider-specific integration workflows also run against disposable SQL Server, MongoDB,
+Cosmos DB emulator, and Azurite service containers. To run those tests locally, set
+`DBTRANSFER_SQLSERVER_CONNECTION`, `DBTRANSFER_MONGODB_CONNECTION`,
+`DBTRANSFER_COSMOSDB_CONNECTION`, or `DBTRANSFER_AZURITE_CONNECTION`, respectively, and
+filter on the corresponding integration-test category.
 
 ## Run the CLI
 
@@ -121,6 +131,20 @@ dotnet run --project src/DbTransfer -- copy \
 ```
 
 Checkpoints require `--transaction batch`, ensuring every saved marker describes a fully committed batch. Use `--resume` with the same query, endpoints, destination, mappings, and batch settings to skip already committed batches; DbTransfer fingerprints these inputs and rejects mismatched checkpoint files. A resumed `--create-table` transfer reuses the destination created by its first attempt. The query must have deterministic ordering and its source rows must not change between attempts. Native bulk is the default; `--no-native-bulk` selects parameterized inserts.
+
+### Document databases
+
+Document-provider source queries include the source location before a `|` separator. Cosmos DB accepts
+`database/container|SELECT * FROM c`, MongoDB accepts `database/collection|{ "active": true }`, and
+Azure Table Storage accepts `table|PartitionKey eq 'north'` (an empty expression selects all MongoDB or
+Table Storage records). These expressions are sent to the provider without rewriting. Cosmos and MongoDB
+destinations use `database.container`; Table Storage uses a one-part table name.
+
+Document stores can contain heterogeneous records. DbTransfer fixes the streamed schema from the first
+record and emits `null` for properties absent from later records; nested documents and arrays are retained
+as JSON values. Cosmos writes require an `id` property, and Table Storage writes require `PartitionKey`
+and `RowKey`; use `--map` when source names differ. New Cosmos containers use `/id` as the partition key.
+Because a transfer can span logical partitions, these providers explicitly require `--transaction none`.
 
 ## Architecture rules
 

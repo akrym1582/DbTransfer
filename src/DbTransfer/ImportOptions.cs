@@ -10,7 +10,7 @@ public sealed class ImportOptions : CommonOptions
     [Option("format", HelpText = "Input format: csv, json, jsonl, or extended-json.", Default = "jsonl")]
     public string Format { get; init; } = "jsonl";
 
-    [Option("destination-provider", Required = true, HelpText = "Destination provider: postgresql, sqlserver, mysql, or oracle.")]
+    [Option("destination-provider", Required = true, HelpText = "Destination provider (SQL, cosmosdb, mongodb, or azure-table-storage).")]
     public string DestinationProvider { get; init; } = string.Empty;
 
     [Option("destination-connection", Required = true, HelpText = "Destination database connection string.")]
