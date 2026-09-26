@@ -2,8 +2,14 @@ using CommandLine;
 
 namespace DbTransfer.Tests;
 
+/// <summary>
+/// CLI の各動詞に対応する生成済みコマンド資料が欠けていないことを検証します。
+/// </summary>
 public sealed class DocumentationTests
 {
+    /// <summary>
+    /// 登録された動詞をリフレクションで列挙し、同名の生成済み Markdown が存在することを確認します。
+    /// </summary>
     [Fact]
     public void Every_cli_verb_has_a_generated_command_page()
     {
