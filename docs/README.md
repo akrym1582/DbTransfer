@@ -10,10 +10,12 @@ If this is your first time using DbTransfer, choose the task you want to perform
 - [`exec`: run SQL and serialize its result rows](guides/exec.md)
 - [`inspect`: preview a query's result schema](guides/inspect.md)
 - [`validate`: test connectivity and query preparation](guides/validate.md)
+- [Provider usage, capabilities, and limitations](providers.md)
+- [In-process C# record scripts](csharp-scripts.md)
 
 Connection strings can contain passwords. Prefer environment variables such as `$DATABASE` rather than placing credentials directly in shell history. DbTransfer writes transferred data to stdout and progress or errors to stderr, so piping command output remains safe.
 
-The `export` and `import` commands also support `--script`, which lets a small executable change each record while it is moving through DbTransfer. See the **Transform each record** section in the [export guide](guides/export.md#transform-each-record) or [import guide](guides/import.md#transform-each-record) for a beginner-friendly example. The other commands do not offer this option.
+The `export` and `import` commands also support `--script`, which compiles and runs a `.csx` file inside DbTransfer to change each record. It does not require Python or an external script runner. See the [C# script contract and examples](csharp-scripts.md). The other commands do not offer this option.
 
 ## Generated command reference
 

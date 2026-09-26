@@ -9,7 +9,8 @@ Inspect schemas and connector capabilities.
 
 ## Learn more
 
-See the [inspect guide](../guides/inspect.md) for a walkthrough, practical examples, and operational notes.
+- See the [inspect guide](../guides/inspect.md) for a walkthrough, practical examples, and operational notes.
+- See [data providers](../providers.md) for provider-specific query syntax, capabilities, and limitations.
 
 ## Help
 

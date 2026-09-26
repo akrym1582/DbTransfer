@@ -9,7 +9,8 @@ Validate database connectivity and a query without transferring rows.
 
 ## Learn more
 
-See the [validate guide](../guides/validate.md) for a walkthrough, practical examples, and operational notes.
+- See the [validate guide](../guides/validate.md) for a walkthrough, practical examples, and operational notes.
+- See [data providers](../providers.md) for provider-specific query syntax, capabilities, and limitations.
 
 ## Help
 

@@ -47,7 +47,7 @@ static async Task<int> RunExportAsync(ExportOptions options, ILogger logger)
     var stopwatch = Stopwatch.StartNew();
     await using var databaseSource = NewSource(options.Provider, options.Connection, options.Query, options);
     ISourceConnector source = string.IsNullOrWhiteSpace(options.Script) ? databaseSource
-        : new ScriptTransformSource(databaseSource, options.Script, options.ScriptArguments, checked((int)Math.Min(options.MaxBatchBytes, int.MaxValue)));
+        : new CSharpScriptTransformSource(databaseSource, options.Script, ParseNamedValues(options.ScriptArguments, "script argument"), checked((int)Math.Min(options.MaxBatchBytes, int.MaxValue)));
     await using var output = OpenOutput(options.Output);
     await using var sink = new FileRecordSink(output, options.Format);
     var result = await new TransferEngine().RunAsync(source, sink, TransferSettings(options, logger, stopwatch)).ConfigureAwait(false);
@@ -61,7 +61,7 @@ static async Task<int> RunImportAsync(ImportOptions options, ILogger logger)
     await using var input = OpenInput(options.Input);
     await using var fileSource = new FileRecordSource(input, options.Format, options.BatchSize, options.MaxBatchBytes);
     ISourceConnector source = string.IsNullOrWhiteSpace(options.Script) ? fileSource
-        : new ScriptTransformSource(fileSource, options.Script, options.ScriptArguments, checked((int)Math.Min(options.MaxBatchBytes, int.MaxValue)));
+        : new CSharpScriptTransformSource(fileSource, options.Script, ParseNamedValues(options.ScriptArguments, "script argument"), checked((int)Math.Min(options.MaxBatchBytes, int.MaxValue)));
     await using var sink = ConnectorFactory.Sink(options.DestinationProvider, options.DestinationConnection);
     var result = await new DatabaseTransferRunner().RunAsync(
         source,
@@ -210,6 +210,9 @@ static QualifiedName ParseName(string text)
 }
 
 static IReadOnlyDictionary<string, string> ParseMappings(IEnumerable<string> values)
+    => ParseNamedValues(values, "column mapping");
+
+static IReadOnlyDictionary<string, string> ParseNamedValues(IEnumerable<string> values, string description)
 {
     var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     foreach (var value in values)
@@ -217,7 +220,7 @@ static IReadOnlyDictionary<string, string> ParseMappings(IEnumerable<string> val
         var pair = value.Split('=', 2, StringSplitOptions.TrimEntries);
         if (pair.Length != 2 || pair.Any(string.IsNullOrWhiteSpace) || !result.TryAdd(pair[0], pair[1]))
         {
-            throw new ArgumentException($"Invalid or duplicate column mapping '{value}'.");
+            throw new ArgumentException($"Invalid or duplicate {description} '{value}'.");
         }
     }
 

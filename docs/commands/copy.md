@@ -9,7 +9,8 @@ Copy records between databases.
 
 ## Learn more
 
-See the [copy guide](../guides/copy.md) for a walkthrough, practical examples, and operational notes.
+- See the [copy guide](../guides/copy.md) for a walkthrough, practical examples, and operational notes.
+- See [data providers](../providers.md) for provider-specific query syntax, capabilities, and limitations.
 
 ## Help
 

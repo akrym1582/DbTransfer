@@ -9,6 +9,8 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $project = Join-Path $repoRoot "src/DbTransfer/DbTransfer.csproj"
 $guideDirectory = Join-Path $repoRoot "docs/guides"
+$providerGuide = Join-Path $repoRoot "docs/providers.md"
+$scriptGuide = Join-Path $repoRoot "docs/csharp-scripts.md"
 if (-not $OutputDirectory) {
     $OutputDirectory = Join-Path $repoRoot "docs/commands"
 }
@@ -104,9 +106,24 @@ foreach ($command in $commands) {
 
     $note = "This command has a production streaming implementation."
     $guidePath = Join-Path $guideDirectory "$($command.Name).md"
-    $guideLink = if (Test-Path -LiteralPath $guidePath -PathType Leaf) {
+    $learnMoreLinks = @()
+    if (Test-Path -LiteralPath $guidePath -PathType Leaf) {
         $relativeGuidePath = [System.IO.Path]::GetRelativePath($OutputDirectory, $guidePath).Replace('\', '/')
-        "## Learn more`n`nSee the [$($command.Name) guide]($relativeGuidePath) for a walkthrough, practical examples, and operational notes.`n"
+        $learnMoreLinks += "- See the [$($command.Name) guide]($relativeGuidePath) for a walkthrough, practical examples, and operational notes."
+    }
+
+    if (Test-Path -LiteralPath $providerGuide -PathType Leaf) {
+        $relativeProviderGuide = [System.IO.Path]::GetRelativePath($OutputDirectory, $providerGuide).Replace('\', '/')
+        $learnMoreLinks += "- See [data providers]($relativeProviderGuide) for provider-specific query syntax, capabilities, and limitations."
+    }
+
+    if ($command.Name -in @("export", "import") -and (Test-Path -LiteralPath $scriptGuide -PathType Leaf)) {
+        $relativeScriptGuide = [System.IO.Path]::GetRelativePath($OutputDirectory, $scriptGuide).Replace('\', '/')
+        $learnMoreLinks += "- See [in-process C# record scripts]($relativeScriptGuide) for the script API, result contract, and examples."
+    }
+
+    $learnMore = if ($learnMoreLinks.Count -gt 0) {
+        "## Learn more`n`n$($learnMoreLinks -join "`n")`n"
     }
     else {
         ""
@@ -121,7 +138,7 @@ $($command.Description)
 > [!NOTE]
 > $note
 
-$guideLink
+$learnMore
 ## Help
 
 $($fence)text
