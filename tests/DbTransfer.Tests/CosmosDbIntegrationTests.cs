@@ -37,7 +37,7 @@ public sealed class CosmosDbIntegrationTests
 
             await using var source = new CosmosDbSource(
                 connectionString,
-                $"{database}/{container}|SELECT c.id, c.value FROM c ORDER BY c.id",
+                $"{database}/{container}|SELECT c.id, c[\"value\"] AS value FROM c ORDER BY c.id",
                 1,
                 1024);
             var sourceSchema = await source.GetSchemaAsync(default);
