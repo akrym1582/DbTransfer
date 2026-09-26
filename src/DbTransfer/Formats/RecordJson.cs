@@ -71,6 +71,11 @@ internal static class RecordJson
             return Convert.FromBase64String(text);
         }
 
+        if (IsIntegralType(targetType) && value is decimal decimalValue && decimalValue != decimal.Truncate(decimalValue))
+        {
+            throw new InvalidDataException($"The fractional value '{decimalValue}' cannot be converted to {targetType.Name} without data loss.");
+        }
+
         return Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
     }
 
@@ -85,7 +90,7 @@ internal static class RecordJson
                 {
                     "$numberLong" => long.Parse(properties[0].Value.GetString()!, CultureInfo.InvariantCulture),
                     "$numberDecimal" => decimal.Parse(properties[0].Value.GetString()!, CultureInfo.InvariantCulture),
-                    "$date" => DateTimeOffset.Parse(properties[0].Value.GetString()!, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
+                    "$date" => ReadDate(properties[0].Value.GetString()!),
                     "$uuid" => Guid.Parse(properties[0].Value.GetString()!),
                     "$binary" => Convert.FromBase64String(properties[0].Value.GetString()!),
                     _ => throw new InvalidDataException($"Unsupported Extended JSON value '{properties[0].Name}'."),
@@ -99,12 +104,27 @@ internal static class RecordJson
             JsonValueKind.String => value.GetString(),
             JsonValueKind.True => true,
             JsonValueKind.False => false,
-            JsonValueKind.Number when value.TryGetInt32(out var integer) => integer,
-            JsonValueKind.Number when value.TryGetInt64(out var longInteger) => longInteger,
             JsonValueKind.Number when value.TryGetDecimal(out var number) => number,
             _ => throw new InvalidDataException("Record values must be scalar JSON values."),
         };
     }
+
+    private static object ReadDate(string value)
+    {
+        var timeStart = value.IndexOf('T', StringComparison.Ordinal);
+        var hasOffset = value.EndsWith('Z') || (timeStart >= 0 &&
+            (value.IndexOf('+', timeStart) >= 0 || value.IndexOf('-', timeStart) >= 0));
+        if (hasOffset)
+        {
+            return DateTimeOffset.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+        }
+
+        return DateTime.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+    }
+
+    private static bool IsIntegralType(Type type) => Type.GetTypeCode(type) is
+        TypeCode.SByte or TypeCode.Byte or TypeCode.Int16 or TypeCode.UInt16 or
+        TypeCode.Int32 or TypeCode.UInt32 or TypeCode.Int64 or TypeCode.UInt64;
 
     private static void WriteValue(Utf8JsonWriter writer, object? value, bool extended)
     {

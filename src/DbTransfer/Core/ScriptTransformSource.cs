@@ -18,20 +18,54 @@ public sealed class ScriptTransformSource(
 
     public async IAsyncEnumerable<RecordBatch> ReadAsync([EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxOutputBytes, 1);
         var schema = await inner.GetSchemaAsync(cancellationToken).ConfigureAwait(false);
         await foreach (var batch in inner.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
             var transformed = new List<object?[]>(batch.Count);
+            long transformedBytes = 0;
             foreach (var row in batch.Rows)
             {
-                transformed.Add(await TransformAsync(schema, row, cancellationToken).ConfigureAwait(false));
+                var result = await TransformAsync(schema, row, cancellationToken).ConfigureAwait(false);
+                if (transformed.Count != 0 && transformedBytes + result.Bytes > maxOutputBytes)
+                {
+                    yield return new RecordBatch(schema, transformed, transformedBytes);
+                    transformed.Clear();
+                    transformedBytes = 0;
+                }
+
+                transformed.Add(result.Row);
+                transformedBytes += result.Bytes;
             }
 
-            yield return new RecordBatch(schema, transformed, batch.EstimatedBytes);
+            if (transformed.Count != 0)
+            {
+                yield return new RecordBatch(schema, transformed, transformedBytes);
+            }
         }
     }
 
-    private async Task<object?[]> TransformAsync(RecordSchema schema, object?[] row, CancellationToken cancellationToken)
+    private static async Task<JsonDocument> ReadOutputAsync(
+        Stream output,
+        Process process,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await JsonDocument.ParseAsync(output, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            if (!process.HasExited)
+            {
+                process.Kill(entireProcessTree: true);
+            }
+
+            throw;
+        }
+    }
+
+    private async Task<TransformResult> TransformAsync(RecordSchema schema, object?[] row, CancellationToken cancellationToken)
     {
         var startInfo = new ProcessStartInfo(executable)
         {
@@ -43,6 +77,8 @@ public sealed class ScriptTransformSource(
         };
         using var process = Process.Start(startInfo) ?? throw new InvalidOperationException($"Could not start script '{executable}'.");
         var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
+        var output = new BoundedReadStream(process.StandardOutput.BaseStream, maxOutputBytes);
+        var outputTask = ReadOutputAsync(output, process, cancellationToken);
         await using (var writer = new Utf8JsonWriter(process.StandardInput.BaseStream))
         {
             RecordJson.WriteObject(writer, schema, row, false);
@@ -51,8 +87,7 @@ public sealed class ScriptTransformSource(
 
         process.StandardInput.Close();
 
-        using var document = await JsonDocument.ParseAsync(
-            new BoundedReadStream(process.StandardOutput.BaseStream, maxOutputBytes), cancellationToken: cancellationToken).ConfigureAwait(false);
+        using var document = await outputTask.ConfigureAwait(false);
         await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
         var error = await errorTask.ConfigureAwait(false);
         if (process.ExitCode != 0)
@@ -66,12 +101,18 @@ public sealed class ScriptTransformSource(
             throw new InvalidDataException("The script must return the same properties in the same order.");
         }
 
-        return record.Values.Select((value, index) => RecordJson.ConvertTo(value, schema.Columns[index].DataType)).ToArray();
+        return new TransformResult(
+            record.Values.Select((value, index) => RecordJson.ConvertTo(value, schema.Columns[index].DataType)).ToArray(),
+            output.BytesRead);
     }
+
+    private sealed record TransformResult(object?[] Row, long Bytes);
 
     private sealed class BoundedReadStream(Stream inner, int limit) : Stream
     {
         private int read;
+
+        public int BytesRead => read;
 
         public override bool CanRead => true;
 

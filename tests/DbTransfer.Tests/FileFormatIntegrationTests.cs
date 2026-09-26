@@ -87,6 +87,37 @@ public sealed class FileFormatIntegrationTests
         Assert.Equal(new byte[] { 1, 2, 3 }, batch.Rows[0][4]);
     }
 
+    [Theory]
+    [InlineData("json")]
+    [InlineData("jsonl")]
+    public async Task Json_numbers_preserve_fractions_when_the_first_value_is_integral(string format)
+    {
+        var separator = format == "json" ? "," : "\n";
+        var content = format == "json" ? "[{\"v\":1},{\"v\":1.5}]" : $"{{\"v\":1}}{separator}{{\"v\":1.5}}";
+        await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+        await using var source = new FileRecordSource(stream, format, 10, 4096);
+
+        var batch = await source.ReadAsync(CancellationToken.None).SingleAsync();
+
+        Assert.Equal(typeof(decimal), batch.Schema.Columns[0].DataType);
+        Assert.Equal(1m, batch.Rows[0][0]);
+        Assert.Equal(1.5m, batch.Rows[1][0]);
+    }
+
+    [Fact]
+    public async Task Extended_json_preserves_offset_free_dates_as_unspecified_DateTime()
+    {
+        const string timestamp = "2026-09-26T12:34:56.0000000";
+        await using var stream = new MemoryStream(Encoding.UTF8.GetBytes($"{{\"date\":{{\"$date\":\"{timestamp}\"}}}}\n"));
+        await using var source = new FileRecordSource(stream, "extended-json", 10, 4096);
+
+        var batch = await source.ReadAsync(CancellationToken.None).SingleAsync();
+
+        var date = Assert.IsType<DateTime>(batch.Rows[0][0]);
+        Assert.Equal(DateTimeKind.Unspecified, date.Kind);
+        Assert.Equal(DateTime.Parse(timestamp), date);
+    }
+
     [Fact]
     public async Task Executable_hook_transforms_records_in_the_streaming_pipeline()
     {
@@ -103,6 +134,41 @@ public sealed class FileFormatIntegrationTests
         Assert.True(await enumerator.MoveNextAsync());
         Assert.Equal("unchanged", enumerator.Current.Rows[0][0]);
         Assert.False(await enumerator.MoveNextAsync());
+    }
+
+    [Fact]
+    public async Task Executable_hook_recalculates_and_bounds_transformed_batches()
+    {
+        if (!File.Exists("/bin/cat"))
+        {
+            return;
+        }
+
+        var schema = new RecordSchema([new RecordColumn("value", typeof(string))]);
+        var inner = new TestSource(schema, [[new string('a', 50)], [new string('b', 50)]]);
+        var source = new ScriptTransformSource(inner, "/bin/cat", null, 75);
+        var batches = await source.ReadAsync(CancellationToken.None).ToListAsync();
+
+        Assert.Equal(2, batches.Count);
+        Assert.All(batches, batch => Assert.InRange(batch.EstimatedBytes, 50, 75));
+    }
+
+    [Fact]
+    public async Task Executable_hook_drains_output_while_writing_large_input()
+    {
+        if (!File.Exists("/bin/cat"))
+        {
+            return;
+        }
+
+        var schema = new RecordSchema([new RecordColumn("value", typeof(string))]);
+        var inner = new TestSource(schema, [[new string('x', 256 * 1024)]]);
+        var source = new ScriptTransformSource(inner, "/bin/cat", null, 300 * 1024);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+        var batch = await source.ReadAsync(timeout.Token).SingleAsync(timeout.Token);
+
+        Assert.Equal(256 * 1024, Assert.IsType<string>(batch.Rows[0][0]).Length);
     }
 
     private sealed class TestSource(RecordSchema schema, object?[][] rows) : ISourceConnector
