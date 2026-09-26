@@ -119,34 +119,26 @@ public sealed class FileFormatIntegrationTests
     }
 
     [Fact]
-    public async Task Executable_hook_transforms_records_in_the_streaming_pipeline()
+    public async Task Csharp_script_transforms_records_in_process()
     {
-        if (!File.Exists("/bin/cat"))
-        {
-            return;
-        }
-
         var schema = new RecordSchema([new RecordColumn("value", typeof(string))]);
-        var inner = new TestSource(schema, [["unchanged"]]);
-        var source = new ScriptTransformSource(inner, "/bin/cat", null, 1024);
+        var inner = new TestSource(schema, [["before"]]);
+        var path = await WriteScriptAsync("Record[\"value\"] = ((string)Record[\"value\"]!).ToUpperInvariant() + Arguments[\"suffix\"];");
+        var source = new CSharpScriptTransformSource(inner, path, new Dictionary<string, string> { ["suffix"] = "!" }, 1024);
         await using var enumerator = source.ReadAsync(CancellationToken.None).GetAsyncEnumerator();
 
         Assert.True(await enumerator.MoveNextAsync());
-        Assert.Equal("unchanged", enumerator.Current.Rows[0][0]);
+        Assert.Equal("BEFORE!", enumerator.Current.Rows[0][0]);
         Assert.False(await enumerator.MoveNextAsync());
     }
 
     [Fact]
-    public async Task Executable_hook_recalculates_and_bounds_transformed_batches()
+    public async Task Csharp_script_recalculates_and_bounds_transformed_batches()
     {
-        if (!File.Exists("/bin/cat"))
-        {
-            return;
-        }
-
         var schema = new RecordSchema([new RecordColumn("value", typeof(string))]);
         var inner = new TestSource(schema, [[new string('a', 50)], [new string('b', 50)]]);
-        var source = new ScriptTransformSource(inner, "/bin/cat", null, 75);
+        var path = await WriteScriptAsync("Record[\"value\"] = Record[\"value\"];");
+        var source = new CSharpScriptTransformSource(inner, path, new Dictionary<string, string>(), 75);
         var batches = await source.ReadAsync(CancellationToken.None).ToListAsync();
 
         Assert.Equal(2, batches.Count);
@@ -154,21 +146,24 @@ public sealed class FileFormatIntegrationTests
     }
 
     [Fact]
-    public async Task Executable_hook_drains_output_while_writing_large_input()
+    public async Task Csharp_script_rejects_schema_changes()
     {
-        if (!File.Exists("/bin/cat"))
-        {
-            return;
-        }
-
         var schema = new RecordSchema([new RecordColumn("value", typeof(string))]);
-        var inner = new TestSource(schema, [[new string('x', 256 * 1024)]]);
-        var source = new ScriptTransformSource(inner, "/bin/cat", null, 300 * 1024);
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var inner = new TestSource(schema, [["value"]]);
+        var path = await WriteScriptAsync("Record[\"extra\"] = 1;");
+        var source = new CSharpScriptTransformSource(inner, path, new Dictionary<string, string>(), 1024);
 
-        var batch = await source.ReadAsync(timeout.Token).SingleAsync(timeout.Token);
+        var exception = await Assert.ThrowsAsync<InvalidDataException>(async () =>
+            await source.ReadAsync(CancellationToken.None).ToListAsync());
 
-        Assert.Equal(256 * 1024, Assert.IsType<string>(batch.Rows[0][0]).Length);
+        Assert.Contains("preserve", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static async Task<string> WriteScriptAsync(string code)
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"dbtransfer-{Guid.NewGuid():N}.csx");
+        await File.WriteAllTextAsync(path, code);
+        return path;
     }
 
     private sealed class TestSource(RecordSchema schema, object?[][] rows) : ISourceConnector

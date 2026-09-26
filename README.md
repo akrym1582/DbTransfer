@@ -12,7 +12,7 @@ Implemented:
 - PostgreSQL, SQL Server, Oracle, and MySQL identifier quoting.
 - Streaming UTF-8 JSONL reading and writing with record-size limits.
 - Streaming CSV, JSON-array, and Extended JSON import/export.
-- Schema-preserving executable record hooks for import and export.
+- Schema-preserving in-process C# record scripts for import and export.
 - Production `import` and `export` commands for files and standard streams.
 - Implemented `copy`, `export`, `import`, `exec`, `inspect`, and `validate` commands.
 - Streaming ADO.NET sources for PostgreSQL, SQL Server, MySQL, and Oracle.
@@ -115,7 +115,7 @@ dbtransfer import --input events.jsonl --format extended-json \
 
 JSON-array input is parsed incrementally rather than loaded as a complete document. Extended JSON uses one object per line and preserves `Int64`, `Decimal`, date/time, UUID, and binary values through `$numberLong`, `$numberDecimal`, `$date`, `$uuid`, and `$binary` wrappers. CSV includes a header row, represents null as `\N`, and escapes a literal `\N` as `\\N` so null and empty strings remain distinct.
 
-`--script <executable>` enables a schema-preserving record hook. DbTransfer starts the executable once per record, writes one JSON object to its stdin, and expects one object with the same properties in the same order on stdout. Use `--script-arguments` for arguments. Non-zero exits, malformed output, schema changes, and output beyond `--max-batch-bytes` stop the transfer.
+`--script <file.csx>` enables a schema-preserving, in-process C# record hook. DbTransfer ships its C# scripting runtime, compiles the file once, and exposes typed `Record`, `Arguments`, and `CancellationToken` globals; Python and external script runners are not required. See the [complete script contract](docs/csharp-scripts.md).
 
 ### Database copy
 
@@ -145,6 +145,8 @@ record and emits `null` for properties absent from later records; nested documen
 as JSON values. Cosmos writes require an `id` property, and Table Storage writes require `PartitionKey`
 and `RowKey`; use `--map` when source names differ. New Cosmos containers use `/id` as the partition key.
 Because a transfer can span logical partitions, these providers explicitly require `--transaction none`.
+
+See [data providers](docs/providers.md) for connection/query syntax, capability differences, creation behavior, type mappings, and provider-specific limitations.
 
 ## Architecture rules
 

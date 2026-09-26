@@ -31,9 +31,9 @@ public sealed class ImportOptions : CommonOptions
     [Option("no-native-bulk", HelpText = "Use parameterized inserts instead of native bulk loading.")]
     public bool NoNativeBulk { get; init; }
 
-    [Option("script", HelpText = "Executable record hook. Receives one JSON object on stdin and returns one on stdout.")]
+    [Option("script", HelpText = "Path to an in-process C# record script (.csx).")]
     public string? Script { get; init; }
 
-    [Option("script-arguments", HelpText = "Arguments passed to the record-hook executable.")]
-    public string? ScriptArguments { get; init; }
+    [Option("script-argument", Separator = ',', HelpText = "C# script argument in name=value form; available through Arguments.")]
+    public IEnumerable<string> ScriptArguments { get; init; } = [];
 }

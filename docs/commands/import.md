@@ -40,10 +40,10 @@ Copyright (C) 2026 DbTransfer
   --no-native-bulk            Use parameterized inserts instead of native bulk
                               loading.
 
-  --script                    Executable record hook. Receives one JSON object
-                              on stdin and returns one on stdout.
+  --script                    Path to an in-process C# record script (.csx).
 
-  --script-arguments          Arguments passed to the record-hook executable.
+  --script-argument           C# script argument in name=value form; available
+                              through Arguments.
 
   --log-file                  Log file path. Supports {Date}, {UtcDate}, and
                               {ProcessId} placeholders.
