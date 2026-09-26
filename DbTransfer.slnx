@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DbTransfer/DbTransfer.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DbTransfer.Tests/DbTransfer.Tests.csproj" />
+  </Folder>
+</Solution>
