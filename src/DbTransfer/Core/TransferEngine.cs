@@ -93,6 +93,7 @@ public sealed class TransferEngine
                 }
 
                 written += result.Succeeded;
+                options.Progress?.Invoke(read, written);
                 await budget.WaitAsync(transferToken).ConfigureAwait(false);
                 try
                 {

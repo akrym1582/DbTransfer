@@ -11,6 +11,9 @@ public sealed record TransferOptions
     /// <summary>Gets 待機中の全バッチに許可する、推定ペイロードサイズの合計上限を取得または初期化します。</summary>
     public long MemoryBudgetBytes { get; init; } = 64 * 1024 * 1024;
 
+    /// <summary>Gets receives cumulative read and written counts as writing advances.</summary>
+    public Action<long, long>? Progress { get; init; }
+
     /// <summary>両方の上限が 1 以上であり、有限のバッファーとして機能することを検証します。</summary>
     /// <exception cref="ArgumentOutOfRangeException"><see cref="BufferBatches"/> または <see cref="MemoryBudgetBytes"/> が 1 未満の場合に発生します。</exception>
     public void Validate()

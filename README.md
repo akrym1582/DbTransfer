@@ -14,12 +14,12 @@ Implemented:
 - Streaming CSV, JSON-array, and Extended JSON import/export.
 - Schema-preserving executable record hooks for import and export.
 - Production `import` and `export` commands for files and standard streams.
-- CLI registration for `copy`, `export`, `import`, `exec`, `inspect`, and `validate`.
+- Implemented `copy`, `export`, `import`, `exec`, `inspect`, and `validate` commands.
 - Streaming ADO.NET sources for PostgreSQL, SQL Server, MySQL, and Oracle.
 - Native PostgreSQL binary COPY, SQL Server bulk copy, MySQL bulk copy, and Oracle array binding.
 - Optional destination table creation, column mapping, batch/all/no transaction scopes, atomic checkpoints, and batch-based resume.
 
-The `exec`, `inspect`, and `validate` commands remain registered placeholders and currently return exit code `3`.
+All commands accept `--log-file` (with `{Date}`, `{UtcDate}`, and `{ProcessId}` placeholders) or `--log-directory`. Logs roll daily and `--log-retention-days` controls automatic cleanup. Transfers report progress to stderr and the log approximately every 10,000 records by default, followed by final counts and elapsed time; use `--progress-interval` to change or disable the interval.
 
 ## Repository layout
 
@@ -76,7 +76,7 @@ Display help for one command:
 dotnet run --project src/DbTransfer -- copy --help
 ```
 
-The planned command roles are:
+The command roles are:
 
 | Command | Intended role |
 |---|---|
@@ -85,7 +85,7 @@ The planned command roles are:
 | `import` | Stream a file or stdin into a database. |
 | `exec` | Execute provider-specific SQL and stream result sets. |
 | `inspect` | Show schemas, keys, and connector capabilities. |
-| `validate` | Validate connectivity and a transfer plan without writing. |
+| `validate` | Validate connectivity and a query without transferring rows. |
 
 The planned data-plane contract reserves stdout for transferred data. Diagnostics, progress, warnings, and summaries belong on stderr so OS pipelines remain safe.
 
