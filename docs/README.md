@@ -13,6 +13,8 @@ If this is your first time using DbTransfer, choose the task you want to perform
 
 Connection strings can contain passwords. Prefer environment variables such as `$DATABASE` rather than placing credentials directly in shell history. DbTransfer writes transferred data to stdout and progress or errors to stderr, so piping command output remains safe.
 
+The `export` and `import` commands also support `--script`, which lets a small executable change each record while it is moving through DbTransfer. See the **Transform each record** section in the [export guide](guides/export.md#transform-each-record) or [import guide](guides/import.md#transform-each-record) for a beginner-friendly example. The other commands do not offer this option.
+
 ## Generated command reference
 
 The command pages contain generated `--help` output and concise usage examples. When a matching beginner guide exists under `docs/guides`, the generator adds a link to it automatically:

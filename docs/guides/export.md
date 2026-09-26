@@ -37,12 +37,40 @@ dbtransfer export --provider postgresql --connection "$DATABASE" \
 
 ## Transform each record
 
-`--script` starts an executable once per record. DbTransfer sends one JSON object to its stdin and expects one JSON object with the same property names and order on stdout:
+Use `--script` when every exported row needs a small change, such as masking a name or normalizing a value. The hook runs after DbTransfer reads the row from the database and before it writes the selected output format.
+
+The value of `--script` must be an executable. If your hook is a Python file, for example, use `python3` as the executable and put the file name in `--script-arguments`:
 
 ```sh
-dbtransfer export ... --script ./redact-record --script-arguments '--profile public'
+dbtransfer export --provider postgresql --connection "$DATABASE" \
+  --query 'select id, display_name from public.users order by id' \
+  --format jsonl --output public-users.jsonl \
+  --script python3 --script-arguments './mask-name.py'
 ```
 
-A non-zero exit, malformed JSON, changed schema, or oversized output stops the transfer. Because a process is launched per row, measure the performance impact before using a record hook on a large export.
+For example, `mask-name.py` can read the one input object, change a value, and write the object back:
+
+```python
+#!/usr/bin/env python3
+import json
+import sys
+
+record = json.load(sys.stdin)
+record["display_name"] = "hidden"
+json.dump(record, sys.stdout)
+```
+
+For **each row**, DbTransfer performs this exchange:
+
+1. It starts the executable once.
+2. It writes one JSON object to the executable's standard input and then closes that input.
+3. It reads one JSON object from the executable's standard output and waits for it to exit.
+4. It converts the returned values back to the original database column types, then writes the record to the export.
+
+The returned object must contain exactly the same property names in the same order. You may change values, including setting a value to `null`, but you cannot add, remove, rename, or reorder fields. Write only the JSON object to stdout; diagnostic messages from the hook should go to stderr. A non-zero exit, malformed JSON, an incompatible value, a changed schema, or output larger than `--max-batch-bytes` stops the export.
+
+`--script-arguments` is optional. It is useful for passing a script path or settings to the executable, for example `--script-arguments './mask-name.py --replacement hidden'`. DbTransfer starts the executable directly rather than through a shell, so shell features such as pipes, redirection, and environment-variable expansion are not interpreted inside this value.
+
+Because a new process is launched for every row, first try the hook on a small query and measure the performance impact before using it on a large export. The hook is best suited to simple, schema-preserving changes; it cannot filter rows or produce multiple rows from one input row.
 
 See the generated [`export` reference](../commands/export.md) for every option and its default.
