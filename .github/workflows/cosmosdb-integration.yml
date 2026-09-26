@@ -33,7 +33,7 @@ jobs:
           --health-retries 30
           --health-start-period 30s
     env:
-      DBTRANSFER_COSMOSDB_CONNECTION: AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEfBVKQdSXM6AO6T3O7/R5sA==
+      DBTRANSFER_COSMOSDB_CONNECTION: AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
