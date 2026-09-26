@@ -159,6 +159,22 @@ public sealed class FileFormatIntegrationTests
         Assert.Contains("preserve", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Theory]
+    [InlineData("Record[\"value\"] = 1.5m;")]
+    [InlineData("Record[\"value\"] = 1.5d;")]
+    public async Task Csharp_script_rejects_fractional_values_for_integral_columns(string script)
+    {
+        var schema = new RecordSchema([new RecordColumn("value", typeof(int))]);
+        var inner = new TestSource(schema, [[1]]);
+        var path = await WriteScriptAsync(script);
+        var source = new CSharpScriptTransformSource(inner, path, new Dictionary<string, string>(), 1024);
+
+        var exception = await Assert.ThrowsAsync<InvalidDataException>(async () =>
+            await source.ReadAsync(CancellationToken.None).ToListAsync());
+
+        Assert.Contains("without data loss", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static async Task<string> WriteScriptAsync(string code)
     {
         var path = Path.Combine(Path.GetTempPath(), $"dbtransfer-{Guid.NewGuid():N}.csx");
