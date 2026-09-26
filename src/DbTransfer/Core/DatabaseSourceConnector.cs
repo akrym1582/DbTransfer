@@ -129,17 +129,26 @@ public sealed class DatabaseSourceConnector(
 
         if (fieldType == typeof(string))
         {
-            var characterCount = currentReader.GetChars(ordinal, 0, null, 0, 0);
-
-            // Every UTF-8 character occupies at least one byte, so this rejects oversized LOBs before allocation.
-            EnsureLengthFits(characterCount, remainingBytes);
-            var value = currentReader.GetString(ordinal);
-            if (System.Text.Encoding.UTF8.GetByteCount(value) > remainingBytes)
+            // With CommandBehavior.SequentialAccess a column can only be read once and only
+            // forward, so the length cannot be probed via GetChars before reading the value:
+            // doing so consumes the column and leaves GetString unable to re-read it from the
+            // start. Instead, stream the characters in bounded chunks, failing fast once the
+            // accumulated UTF-8 byte size would exceed the remaining budget.
+            var buffer = new char[4096];
+            var characters = new System.Text.StringBuilder();
+            long bytesSoFar = 0;
+            long charsRead;
+            long dataOffset = 0;
+            while ((charsRead = currentReader.GetChars(ordinal, dataOffset, buffer, 0, buffer.Length)) > 0)
             {
-                throw new InvalidOperationException("A source value exceeds the configured maximum batch bytes.");
+                var chunkLength = checked((int)charsRead);
+                bytesSoFar += System.Text.Encoding.UTF8.GetByteCount(buffer, 0, chunkLength);
+                EnsureLengthFits(bytesSoFar, remainingBytes);
+                characters.Append(buffer, 0, chunkLength);
+                dataOffset += charsRead;
             }
 
-            return value;
+            return characters.ToString();
         }
 
         return currentReader.GetValue(ordinal);
