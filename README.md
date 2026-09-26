@@ -57,6 +57,12 @@ dotnet test DbTransfer.slnx --configuration Release
 dotnet format DbTransfer.slnx --verify-no-changes
 ```
 
+The test suite also contains a PostgreSQL integration test. Set
+`DBTRANSFER_POSTGRES_CONNECTION` to a PostgreSQL connection string to enable it; when the
+variable is absent, the test is a no-op. GitHub Actions supplies this variable from its
+PostgreSQL service container and runs the integration test automatically with the rest of
+the suite.
+
 ## Run the CLI
 
 Display the available commands:
