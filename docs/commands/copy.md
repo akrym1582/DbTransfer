@@ -7,6 +7,10 @@ Copy records between databases.
 > [!NOTE]
 > This command has a production streaming implementation.
 
+## Learn more
+
+See the [copy guide](../guides/copy.md) for a walkthrough, practical examples, and operational notes.
+
 ## Help
 
 ```text

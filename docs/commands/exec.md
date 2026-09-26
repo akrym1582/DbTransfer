@@ -7,6 +7,10 @@ Execute provider-specific SQL.
 > [!NOTE]
 > This command has a production streaming implementation.
 
+## Learn more
+
+See the [exec guide](../guides/exec.md) for a walkthrough, practical examples, and operational notes.
+
 ## Help
 
 ```text

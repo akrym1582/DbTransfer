@@ -7,6 +7,10 @@ Export database records to a file or stdout.
 > [!NOTE]
 > This command has a production streaming implementation.
 
+## Learn more
+
+See the [export guide](../guides/export.md) for a walkthrough, practical examples, and operational notes.
+
 ## Help
 
 ```text

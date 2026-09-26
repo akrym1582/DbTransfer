@@ -7,6 +7,10 @@ Inspect schemas and connector capabilities.
 > [!NOTE]
 > This command has a production streaming implementation.
 
+## Learn more
+
+See the [inspect guide](../guides/inspect.md) for a walkthrough, practical examples, and operational notes.
+
 ## Help
 
 ```text

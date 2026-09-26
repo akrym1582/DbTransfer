@@ -7,6 +7,10 @@ Validate database connectivity and a query without transferring rows.
 > [!NOTE]
 > This command has a production streaming implementation.
 
+## Learn more
+
+See the [validate guide](../guides/validate.md) for a walkthrough, practical examples, and operational notes.
+
 ## Help
 
 ```text
