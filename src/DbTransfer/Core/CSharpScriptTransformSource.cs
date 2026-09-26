@@ -90,6 +90,11 @@ public sealed class CSharpScriptTransformSource(
         var type = Nullable.GetUnderlyingType(targetType) ?? targetType;
         try
         {
+            if (IsIntegralType(type) && HasFractionalPart(value))
+            {
+                throw new InvalidDataException($"The fractional C# script value '{value}' cannot be converted to {targetType.FullName} without data loss.");
+            }
+
             return type.IsEnum ? Enum.Parse(type, Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture)!, true)
                 : Convert.ChangeType(value, type, System.Globalization.CultureInfo.InvariantCulture);
         }
@@ -98,4 +103,16 @@ public sealed class CSharpScriptTransformSource(
             throw new InvalidDataException($"C# script value '{value}' cannot be converted to {targetType.FullName}.", exception);
         }
     }
+
+    private static bool IsIntegralType(Type type) => Type.GetTypeCode(type) is
+        TypeCode.SByte or TypeCode.Byte or TypeCode.Int16 or TypeCode.UInt16 or
+        TypeCode.Int32 or TypeCode.UInt32 or TypeCode.Int64 or TypeCode.UInt64;
+
+    private static bool HasFractionalPart(object value) => value switch
+    {
+        decimal number => number != decimal.Truncate(number),
+        double number => number != Math.Truncate(number),
+        float number => number != MathF.Truncate(number),
+        _ => false,
+    };
 }
