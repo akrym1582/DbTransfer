@@ -2,5 +2,5 @@ using DbTransfer.Core;
 
 namespace DbTransfer.Connectors.PostgreSql;
 
-/// <summary>Quotes identifiers for PostgreSQL-generated SQL.</summary>
+/// <summary>PostgreSQL の識別子を二重引用符で囲み、名前に含まれる二重引用符を二重化します。</summary>
 public sealed class PostgreSqlDialect() : SqlDialectBase("\"", "\"");

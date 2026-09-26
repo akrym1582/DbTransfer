@@ -1,0 +1,9 @@
+root = true
+
+[*.cs]
+# このプロジェクトでは、次の規則だけをチームで合意した例外として無効にします。
+dotnet_diagnostic.SA1101.severity = none
+dotnet_diagnostic.SA1200.severity = none
+dotnet_diagnostic.SA1309.severity = none
+dotnet_diagnostic.SA1629.severity = none
+dotnet_diagnostic.SA1633.severity = none
