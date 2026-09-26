@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using DbTransfer.Core;
 using Microsoft.Azure.Cosmos;
+using Newtonsoft.Json.Linq;
 
 namespace DbTransfer.Connectors.CosmosDb;
 
@@ -10,10 +11,10 @@ public sealed class CosmosDbSource : IDatabaseSource
 {
     private readonly CosmosClient client;
     private readonly Container container;
-    private readonly FeedIterator<JsonElement> iterator;
+    private readonly FeedIterator<JObject> iterator;
     private readonly int batchSize;
     private readonly long maxBatchBytes;
-    private readonly Queue<JsonElement> buffered = new();
+    private readonly Queue<JObject> buffered = new();
     private RecordSchema? schema;
 
     public CosmosDbSource(string connectionString, string query, int batchSize, long maxBatchBytes)
@@ -23,7 +24,7 @@ public sealed class CosmosDbSource : IDatabaseSource
         var location = DocumentConnector.SplitLocation(parsed.Location, "database/container");
         client = new CosmosClient(connectionString);
         container = client.GetContainer(location.First, location.Second);
-        iterator = container.GetItemQueryIterator<JsonElement>(new QueryDefinition(parsed.Query));
+        iterator = container.GetItemQueryIterator<JObject>(new QueryDefinition(parsed.Query));
         this.batchSize = batchSize;
         this.maxBatchBytes = maxBatchBytes;
     }
@@ -35,12 +36,12 @@ public sealed class CosmosDbSource : IDatabaseSource
         if (schema is not null) return schema;
         if (iterator.HasMoreResults)
         {
-            foreach (var item in await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false)) buffered.Enqueue(item.Clone());
+            foreach (var item in await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false)) buffered.Enqueue(item);
         }
 
         schema = buffered.Count == 0
             ? new RecordSchema([new RecordColumn("id", typeof(string))])
-            : new RecordSchema(buffered.Peek().EnumerateObject().Select(p => new RecordColumn(p.Name, typeof(object))));
+            : new RecordSchema(buffered.Peek().Properties().Select(p => new RecordColumn(p.Name, typeof(object))));
         return schema;
     }
 
@@ -52,10 +53,11 @@ public sealed class CosmosDbSource : IDatabaseSource
         while (buffered.Count > 0 || iterator.HasMoreResults)
         {
             if (buffered.Count == 0)
-                foreach (var item in await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false)) buffered.Enqueue(item.Clone());
+                foreach (var item in await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false)) buffered.Enqueue(item);
             while (buffered.TryDequeue(out var document))
             {
-                var properties = document.EnumerateObject().ToDictionary(p => p.Name, p => p.Value, StringComparer.Ordinal);
+                using var json = JsonDocument.Parse(document.ToString());
+                var properties = json.RootElement.EnumerateObject().ToDictionary(p => p.Name, p => p.Value.Clone(), StringComparer.Ordinal);
                 var row = currentSchema.Columns.Select(c => properties.TryGetValue(c.Name, out var v) ? DocumentConnector.JsonValue(v) : null).ToArray();
                 var size = DocumentConnector.Estimate(row);
                 if (size > maxBatchBytes) throw new InvalidOperationException("A source row exceeds the configured maximum batch bytes.");
