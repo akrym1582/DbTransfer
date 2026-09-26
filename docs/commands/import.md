@@ -7,6 +7,10 @@ Import records from a file or stdin.
 > [!NOTE]
 > This command has a production streaming implementation.
 
+## Learn more
+
+See the [import guide](../guides/import.md) for a walkthrough, practical examples, and operational notes.
+
 ## Help
 
 ```text
