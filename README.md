@@ -1,6 +1,6 @@
 # DbTransfer
 
-`DbTransfer` is an early .NET 10 command-line application for streaming data between databases and files. The current repository contains the provider-neutral transfer foundation, JSONL support, SQL identifier dialects, and the CLI command surface. Database connections and native bulk writers are not implemented yet.
+`DbTransfer` is a .NET 10 command-line application for streaming data between databases and files. The repository contains a provider-neutral transfer foundation, JSONL support, SQL identifier dialects, and live PostgreSQL, SQL Server, MySQL, and Oracle database-to-database copying.
 
 ## Status
 
@@ -12,14 +12,15 @@ Implemented:
 - PostgreSQL, SQL Server, Oracle, and MySQL identifier quoting.
 - Streaming UTF-8 JSONL reading and writing with record-size limits.
 - CLI registration for `copy`, `export`, `import`, `exec`, `inspect`, and `validate`.
+- Streaming ADO.NET sources for PostgreSQL, SQL Server, MySQL, and Oracle.
+- Native PostgreSQL binary COPY, SQL Server bulk copy, MySQL bulk copy, and Oracle array binding.
+- Optional destination table creation, column mapping, batch/all/no transaction scopes, atomic checkpoints, and batch-based resume.
 
 Not implemented yet:
 
-- Live database connectors and authentication.
-- Native bulk APIs, table creation, mapping, transactions, checkpoints, and resume.
 - CSV, JSON-array, Extended JSON, scripting hooks, and production import/export commands.
 
-Recognized commands currently return exit code `3` and explain on stderr that no database connector is installed.
+Commands other than `copy` currently return exit code `3` and explain on stderr that their production implementation is not installed.
 
 ## Repository layout
 
@@ -82,6 +83,21 @@ The planned command roles are:
 | `validate` | Validate connectivity and a transfer plan without writing. |
 
 The planned data-plane contract reserves stdout for transferred data. Diagnostics, progress, warnings, and summaries belong on stderr so OS pipelines remain safe.
+
+### Database copy
+
+The `copy` command accepts an unmodified source query and a structured destination name. For example:
+
+```sh
+dotnet run --project src/DbTransfer -- copy \
+  --source-provider postgresql --source-connection "$SOURCE_DATABASE" \
+  --query 'select id, display_name from public.users order by id' \
+  --destination-provider sqlserver --destination-connection "$DESTINATION_DATABASE" \
+  --destination-table dbo.Users --create-table --map display_name=Name \
+  --transaction batch --checkpoint ./copy.checkpoint.json
+```
+
+Checkpoints require `--transaction batch`, ensuring every saved marker describes a fully committed batch. Use `--resume` with the same query, endpoints, destination, mappings, and batch settings to skip already committed batches; DbTransfer fingerprints these inputs and rejects mismatched checkpoint files. A resumed `--create-table` transfer reuses the destination created by its first attempt. The query must have deterministic ordering and its source rows must not change between attempts. Native bulk is the default; `--no-native-bulk` selects parameterized inserts.
 
 ## Architecture rules
 

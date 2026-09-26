@@ -5,7 +5,7 @@
 Copy records between databases.
 
 > [!NOTE]
-> Database connectors are not implemented yet, so these examples document the planned interface.
+> The copy command has live database connectors. Other command pages may describe planned interfaces.
 
 ## Help
 
@@ -13,30 +13,64 @@ Copy records between databases.
 DbTransfer <version>
 Copyright (C) 2026 DbTransfer
 
-  --job                 Path to a job definition.
+  --source-provider           Required. Source provider: postgresql, sqlserver,
+                              mysql, or oracle.
 
-  --batch-size          (Default: 1000) Maximum number of records in a batch.
+  --source-connection         Required. Source ADO.NET connection string.
 
-  --max-batch-bytes     (Default: 4194304) Maximum estimated payload bytes in a
-                        batch.
+  --query                     Required. Source SQL query; it is executed without
+                              rewriting.
 
-  --buffer-batches      (Default: 2) Maximum number of batches buffered between
-                        pipeline stages.
+  --destination-provider      Required. Destination provider: postgresql,
+                              sqlserver, mysql, or oracle.
 
-  --memory-budget-mb    (Default: 64) Memory budget in MiB for buffered record
-                        batches.
+  --destination-connection    Required. Destination ADO.NET connection string.
 
-  --help                Display this help screen.
+  --destination-table         Required. Destination table as
+                              [catalog.]schema.name.
 
-  --version             Display version information.
+  --create-table              Create the destination table from the source
+                              schema.
+
+  --map                       Column mappings as source=destination, separated
+                              by commas.
+
+  --transaction               (Default: batch) Transaction scope: none, batch,
+                              or all.
+
+  --no-native-bulk            Use parameterized inserts instead of the provider
+                              native bulk API.
+
+  --checkpoint                Path for an atomic batch checkpoint.
+
+  --resume                    Resume by skipping batches recorded in the
+                              checkpoint.
+
+  --job                       Path to a job definition.
+
+  --batch-size                (Default: 1000) Maximum number of records in a
+                              batch.
+
+  --max-batch-bytes           (Default: 4194304) Maximum estimated payload bytes
+                              in a batch.
+
+  --buffer-batches            (Default: 2) Maximum number of batches buffered
+                              between pipeline stages.
+
+  --memory-budget-mb          (Default: 64) Memory budget in MiB for buffered
+                              record batches.
+
+  --help                      Display this help screen.
+
+  --version                   Display version information.
 ```
 
 ## Usage examples
 
 ```sh
-dbtransfer copy --job jobs/copy-orders.json
+dbtransfer copy --source-provider postgresql --source-connection $SOURCE_DATABASE --query 'select * from public.orders order by id' --destination-provider sqlserver --destination-connection $DESTINATION_DATABASE --destination-table dbo.Orders
 ```
 
 ```sh
-dbtransfer copy --job jobs/copy-orders.json --batch-size 2000 --memory-budget-mb 128
+dbtransfer copy --source-provider mysql --source-connection $SOURCE_DATABASE --query 'select id, name from users order by id' --destination-provider oracle --destination-connection $DESTINATION_DATABASE --destination-table APP.USERS --create-table --checkpoint copy.json --resume
 ```
