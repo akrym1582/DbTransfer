@@ -18,12 +18,12 @@ $examples = @{
         "dbtransfer copy --source-provider mysql --source-connection `$SOURCE_DATABASE --query 'select id, name from users order by id' --destination-provider oracle --destination-connection `$DESTINATION_DATABASE --destination-table APP.USERS --create-table --checkpoint copy.json --resume"
     )
     export = @(
-        "dbtransfer export --job jobs/export-orders.json",
-        "dbtransfer export --job jobs/export-orders.json | gzip > orders.jsonl.gz"
+        "dbtransfer export --provider postgresql --connection `$DATABASE --query 'select * from orders order by id' --format jsonl --output -",
+        "dbtransfer export --provider postgresql --connection `$DATABASE --query 'select * from orders order by id' --format extended-json | gzip > orders.jsonl.gz"
     )
     import = @(
-        "dbtransfer import --job jobs/import-orders.json",
-        "gzip -dc orders.jsonl.gz | dbtransfer import --job jobs/import-orders.json"
+        "dbtransfer import --input orders.csv --format csv --destination-provider postgresql --destination-connection `$DATABASE --destination-table public.orders",
+        "gzip -dc orders.jsonl.gz | dbtransfer import --format extended-json --destination-provider postgresql --destination-connection `$DATABASE --destination-table public.orders"
     )
     exec = @(
         "dbtransfer exec --job jobs/report.json",
@@ -84,8 +84,8 @@ foreach ($command in $commands) {
         "_No usage example has been defined._"
     }
 
-    $note = if ($command.Name -eq "copy") {
-        "The copy command has live database connectors. Other command pages may describe planned interfaces."
+    $note = if ($command.Name -in @("copy", "export", "import")) {
+        "This command has a production streaming implementation."
     } else {
         "This command is not implemented yet, so its examples document the planned interface."
     }

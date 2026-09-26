@@ -5,7 +5,7 @@
 Import records from a file or stdin.
 
 > [!NOTE]
-> Database connectors are not implemented yet, so these examples document the planned interface.
+> This command has a production streaming implementation.
 
 ## Help
 
@@ -13,30 +13,59 @@ Import records from a file or stdin.
 DbTransfer <version>
 Copyright (C) 2026 DbTransfer
 
-  --job                 Path to a job definition.
+  --input                     (Default: -) Input file, or '-' for stdin.
 
-  --batch-size          (Default: 1000) Maximum number of records in a batch.
+  --format                    (Default: jsonl) Input format: csv, json, jsonl,
+                              or extended-json.
 
-  --max-batch-bytes     (Default: 4194304) Maximum estimated payload bytes in a
-                        batch.
+  --destination-provider      Required. Destination provider: postgresql,
+                              sqlserver, mysql, or oracle.
 
-  --buffer-batches      (Default: 2) Maximum number of batches buffered between
-                        pipeline stages.
+  --destination-connection    Required. Destination database connection string.
 
-  --memory-budget-mb    (Default: 64) Memory budget in MiB for buffered record
-                        batches.
+  --destination-table         Required. One-, two-, or three-part destination
+                              table name.
 
-  --help                Display this help screen.
+  --create-table              Create the destination table before importing.
 
-  --version             Display version information.
+  --map                       Column mapping in source=destination form.
+
+  --transaction               (Default: batch) Transaction scope: none, batch,
+                              or all.
+
+  --no-native-bulk            Use parameterized inserts instead of native bulk
+                              loading.
+
+  --script                    Executable record hook. Receives one JSON object
+                              on stdin and returns one on stdout.
+
+  --script-arguments          Arguments passed to the record-hook executable.
+
+  --job                       Path to a job definition.
+
+  --batch-size                (Default: 1000) Maximum number of records in a
+                              batch.
+
+  --max-batch-bytes           (Default: 4194304) Maximum estimated payload bytes
+                              in a batch.
+
+  --buffer-batches            (Default: 2) Maximum number of batches buffered
+                              between pipeline stages.
+
+  --memory-budget-mb          (Default: 64) Memory budget in MiB for buffered
+                              record batches.
+
+  --help                      Display this help screen.
+
+  --version                   Display version information.
 ```
 
 ## Usage examples
 
 ```sh
-dbtransfer import --job jobs/import-orders.json
+dbtransfer import --input orders.csv --format csv --destination-provider postgresql --destination-connection $DATABASE --destination-table public.orders
 ```
 
 ```sh
-gzip -dc orders.jsonl.gz | dbtransfer import --job jobs/import-orders.json
+gzip -dc orders.jsonl.gz | dbtransfer import --format extended-json --destination-provider postgresql --destination-connection $DATABASE --destination-table public.orders
 ```

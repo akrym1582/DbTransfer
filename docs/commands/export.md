@@ -5,13 +5,31 @@
 Export database records to a file or stdout.
 
 > [!NOTE]
-> Database connectors are not implemented yet, so these examples document the planned interface.
+> This command has a production streaming implementation.
 
 ## Help
 
 ```text
 DbTransfer <version>
 Copyright (C) 2026 DbTransfer
+
+  --provider            Required. Source provider: postgresql, sqlserver, mysql,
+                        or oracle.
+
+  --connection          Required. Source database connection string.
+
+  --query               Required. Source SQL query; it is executed without
+                        rewriting.
+
+  --output              (Default: -) Output file, or '-' for stdout.
+
+  --format              (Default: jsonl) Output format: csv, json, jsonl, or
+                        extended-json.
+
+  --script              Executable record hook. Receives one JSON object on
+                        stdin and returns one on stdout.
+
+  --script-arguments    Arguments passed to the record-hook executable.
 
   --job                 Path to a job definition.
 
@@ -34,9 +52,9 @@ Copyright (C) 2026 DbTransfer
 ## Usage examples
 
 ```sh
-dbtransfer export --job jobs/export-orders.json
+dbtransfer export --provider postgresql --connection $DATABASE --query 'select * from orders order by id' --format jsonl --output -
 ```
 
 ```sh
-dbtransfer export --job jobs/export-orders.json | gzip > orders.jsonl.gz
+dbtransfer export --provider postgresql --connection $DATABASE --query 'select * from orders order by id' --format extended-json | gzip > orders.jsonl.gz
 ```
