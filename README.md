@@ -1,6 +1,6 @@
 # DbTransfer
 
-`DbTransfer` is a .NET 10 command-line application for streaming data between databases and files. The repository contains a provider-neutral transfer foundation, JSONL support, SQL identifier dialects, and live PostgreSQL, SQL Server, MySQL, and Oracle database-to-database copying.
+`DbTransfer` is a .NET 10 command-line application for streaming data between databases and files. The repository contains a provider-neutral transfer foundation, streaming CSV, JSON-array, JSONL, and Extended JSON support, SQL identifier dialects, and live PostgreSQL, SQL Server, MySQL, and Oracle import, export, and database-to-database copying.
 
 ## Status
 
@@ -11,16 +11,15 @@ Implemented:
 - A cancellation-aware transfer engine with bounded batch count and memory budget.
 - PostgreSQL, SQL Server, Oracle, and MySQL identifier quoting.
 - Streaming UTF-8 JSONL reading and writing with record-size limits.
+- Streaming CSV, JSON-array, and Extended JSON import/export.
+- Schema-preserving executable record hooks for import and export.
+- Production `import` and `export` commands for files and standard streams.
 - CLI registration for `copy`, `export`, `import`, `exec`, `inspect`, and `validate`.
 - Streaming ADO.NET sources for PostgreSQL, SQL Server, MySQL, and Oracle.
 - Native PostgreSQL binary COPY, SQL Server bulk copy, MySQL bulk copy, and Oracle array binding.
 - Optional destination table creation, column mapping, batch/all/no transaction scopes, atomic checkpoints, and batch-based resume.
 
-Not implemented yet:
-
-- CSV, JSON-array, Extended JSON, scripting hooks, and production import/export commands.
-
-Commands other than `copy` currently return exit code `3` and explain on stderr that their production implementation is not installed.
+The `exec`, `inspect`, and `validate` commands remain registered placeholders and currently return exit code `3`.
 
 ## Repository layout
 
@@ -89,6 +88,24 @@ The planned command roles are:
 | `validate` | Validate connectivity and a transfer plan without writing. |
 
 The planned data-plane contract reserves stdout for transferred data. Diagnostics, progress, warnings, and summaries belong on stderr so OS pipelines remain safe.
+
+### Import and export
+
+Use `--format csv`, `json`, `jsonl`, or `extended-json`. A path of `-` (the default) selects stdin for imports and stdout for exports:
+
+```sh
+dbtransfer export --provider postgresql --connection "$DATABASE" \
+  --query 'select id, created_at from events order by id' \
+  --format extended-json --output events.jsonl
+
+dbtransfer import --input events.jsonl --format extended-json \
+  --destination-provider postgresql --destination-connection "$DATABASE" \
+  --destination-table archive.events --create-table
+```
+
+JSON-array input is parsed incrementally rather than loaded as a complete document. Extended JSON uses one object per line and preserves `Int64`, `Decimal`, date/time, UUID, and binary values through `$numberLong`, `$numberDecimal`, `$date`, `$uuid`, and `$binary` wrappers. CSV includes a header row, represents null as `\N`, and escapes a literal `\N` as `\\N` so null and empty strings remain distinct.
+
+`--script <executable>` enables a schema-preserving record hook. DbTransfer starts the executable once per record, writes one JSON object to its stdin, and expects one object with the same properties in the same order on stdout. Use `--script-arguments` for arguments. Non-zero exits, malformed output, schema changes, and output beyond `--max-batch-bytes` stop the transfer.
 
 ### Database copy
 
