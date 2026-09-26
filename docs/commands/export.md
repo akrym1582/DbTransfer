@@ -9,7 +9,9 @@ Export database records to a file or stdout.
 
 ## Learn more
 
-See the [export guide](../guides/export.md) for a walkthrough, practical examples, and operational notes.
+- See the [export guide](../guides/export.md) for a walkthrough, practical examples, and operational notes.
+- See [data providers](../providers.md) for provider-specific query syntax, capabilities, and limitations.
+- See [in-process C# record scripts](../csharp-scripts.md) for the script API, result contract, and examples.
 
 ## Help
 

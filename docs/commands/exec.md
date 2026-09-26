@@ -9,7 +9,8 @@ Execute provider-specific SQL.
 
 ## Learn more
 
-See the [exec guide](../guides/exec.md) for a walkthrough, practical examples, and operational notes.
+- See the [exec guide](../guides/exec.md) for a walkthrough, practical examples, and operational notes.
+- See [data providers](../providers.md) for provider-specific query syntax, capabilities, and limitations.
 
 ## Help
 
