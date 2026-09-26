@@ -1,11 +1,19 @@
 using CommandLine;
 
-/// <summary>すべてのコマンドで共通して使用する、ジョブ定義とバッファー上限のオプションを保持します。</summary>
+/// <summary>すべてのコマンドで共通して使用する、ログとバッファー上限のオプションを保持します。</summary>
 public abstract class CommonOptions
 {
-    /// <summary>Gets 接続先やマッピングなど、再利用する転送設定を記述したジョブ定義ファイルのパスを取得または初期化します。</summary>
-    [Option("job", HelpText = "Path to a job definition.")]
-    public string? Job { get; init; }
+    [Option("log-file", HelpText = "Log file path. Supports {Date}, {UtcDate}, and {ProcessId} placeholders.")]
+    public string? LogFile { get; init; }
+
+    [Option("log-directory", HelpText = "Directory for daily dbtransfer log files.")]
+    public string? LogDirectory { get; init; }
+
+    [Option("log-retention-days", Default = 30, HelpText = "Delete rolling log files older than this many days.")]
+    public int LogRetentionDays { get; init; } = 30;
+
+    [Option("progress-interval", Default = 10000, HelpText = "Report progress after approximately this many written records; 0 disables progress reports.")]
+    public int ProgressInterval { get; init; } = 10000;
 
     /// <summary>Gets 接続先へ一度に渡すレコード数の上限を取得または初期化します。</summary>
     [Option("batch-size", Default = 1000, HelpText = "Maximum number of records in a batch.")]

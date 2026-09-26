@@ -5,7 +5,7 @@
 Copy records between databases.
 
 > [!NOTE]
-> The copy command has live database connectors. Other command pages may describe planned interfaces.
+> This command has a production streaming implementation.
 
 ## Help
 
@@ -46,7 +46,17 @@ Copyright (C) 2026 DbTransfer
   --resume                    Resume by skipping batches recorded in the
                               checkpoint.
 
-  --job                       Path to a job definition.
+  --log-file                  Log file path. Supports {Date}, {UtcDate}, and
+                              {ProcessId} placeholders.
+
+  --log-directory             Directory for daily dbtransfer log files.
+
+  --log-retention-days        (Default: 30) Delete rolling log files older than
+                              this many days.
+
+  --progress-interval         (Default: 10000) Report progress after
+                              approximately this many written records; 0
+                              disables progress reports.
 
   --batch-size                (Default: 1000) Maximum number of records in a
                               batch.

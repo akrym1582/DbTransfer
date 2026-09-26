@@ -5,7 +5,7 @@
 Inspect schemas and connector capabilities.
 
 > [!NOTE]
-> Database connectors are not implemented yet, so these examples document the planned interface.
+> This command has a production streaming implementation.
 
 ## Help
 
@@ -13,26 +13,44 @@ Inspect schemas and connector capabilities.
 DbTransfer <version>
 Copyright (C) 2026 DbTransfer
 
-  --job                 Path to a job definition.
+  --provider              Required. Provider: postgresql, sqlserver, mysql, or
+                          oracle.
 
-  --batch-size          (Default: 1000) Maximum number of records in a batch.
+  --connection            Required. ADO.NET connection string.
 
-  --max-batch-bytes     (Default: 4194304) Maximum estimated payload bytes in a
-                        batch.
+  --query                 Required. Query whose result schema will be inspected
+                          without rewriting.
 
-  --buffer-batches      (Default: 2) Maximum number of batches buffered between
-                        pipeline stages.
+  --log-file              Log file path. Supports {Date}, {UtcDate}, and
+                          {ProcessId} placeholders.
 
-  --memory-budget-mb    (Default: 64) Memory budget in MiB for buffered record
-                        batches.
+  --log-directory         Directory for daily dbtransfer log files.
 
-  --help                Display this help screen.
+  --log-retention-days    (Default: 30) Delete rolling log files older than this
+                          many days.
 
-  --version             Display version information.
+  --progress-interval     (Default: 10000) Report progress after approximately
+                          this many written records; 0 disables progress
+                          reports.
+
+  --batch-size            (Default: 1000) Maximum number of records in a batch.
+
+  --max-batch-bytes       (Default: 4194304) Maximum estimated payload bytes in
+                          a batch.
+
+  --buffer-batches        (Default: 2) Maximum number of batches buffered
+                          between pipeline stages.
+
+  --memory-budget-mb      (Default: 64) Memory budget in MiB for buffered record
+                          batches.
+
+  --help                  Display this help screen.
+
+  --version               Display version information.
 ```
 
 ## Usage examples
 
 ```sh
-dbtransfer inspect --job jobs/inspect-orders.json
+dbtransfer inspect --provider postgresql --connection $DATABASE --query 'select * from orders limit 0'
 ```

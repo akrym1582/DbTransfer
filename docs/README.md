@@ -11,7 +11,7 @@ The command pages contain generated `--help` output and usage examples:
 - [`inspect`](commands/inspect.md)
 - [`validate`](commands/validate.md)
 
-The examples describe the intended CLI and are marked as planned while database connectors are not yet implemented. Generate all command pages from the actual executable with:
+The examples describe the implemented CLI. Generate all command pages from the actual executable with:
 
 ```powershell
 pwsh ./scripts/Generate-CommandDocs.ps1

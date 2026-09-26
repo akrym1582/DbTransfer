@@ -41,7 +41,17 @@ Copyright (C) 2026 DbTransfer
 
   --script-arguments          Arguments passed to the record-hook executable.
 
-  --job                       Path to a job definition.
+  --log-file                  Log file path. Supports {Date}, {UtcDate}, and
+                              {ProcessId} placeholders.
+
+  --log-directory             Directory for daily dbtransfer log files.
+
+  --log-retention-days        (Default: 30) Delete rolling log files older than
+                              this many days.
+
+  --progress-interval         (Default: 10000) Report progress after
+                              approximately this many written records; 0
+                              disables progress reports.
 
   --batch-size                (Default: 1000) Maximum number of records in a
                               batch.

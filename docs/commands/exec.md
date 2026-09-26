@@ -5,7 +5,7 @@
 Execute provider-specific SQL.
 
 > [!NOTE]
-> Database connectors are not implemented yet, so these examples document the planned interface.
+> This command has a production streaming implementation.
 
 ## Help
 
@@ -13,30 +13,52 @@ Execute provider-specific SQL.
 DbTransfer <version>
 Copyright (C) 2026 DbTransfer
 
-  --job                 Path to a job definition.
+  --provider              Required. Provider: postgresql, sqlserver, mysql, or
+                          oracle.
 
-  --batch-size          (Default: 1000) Maximum number of records in a batch.
+  --connection            Required. ADO.NET connection string.
 
-  --max-batch-bytes     (Default: 4194304) Maximum estimated payload bytes in a
-                        batch.
+  --sql                   Required. SQL to execute without rewriting.
 
-  --buffer-batches      (Default: 2) Maximum number of batches buffered between
-                        pipeline stages.
+  --output                (Default: -) Result output file, or '-' for stdout.
 
-  --memory-budget-mb    (Default: 64) Memory budget in MiB for buffered record
-                        batches.
+  --format                (Default: jsonl) Result format: csv, json, jsonl, or
+                          extended-json.
 
-  --help                Display this help screen.
+  --log-file              Log file path. Supports {Date}, {UtcDate}, and
+                          {ProcessId} placeholders.
 
-  --version             Display version information.
+  --log-directory         Directory for daily dbtransfer log files.
+
+  --log-retention-days    (Default: 30) Delete rolling log files older than this
+                          many days.
+
+  --progress-interval     (Default: 10000) Report progress after approximately
+                          this many written records; 0 disables progress
+                          reports.
+
+  --batch-size            (Default: 1000) Maximum number of records in a batch.
+
+  --max-batch-bytes       (Default: 4194304) Maximum estimated payload bytes in
+                          a batch.
+
+  --buffer-batches        (Default: 2) Maximum number of batches buffered
+                          between pipeline stages.
+
+  --memory-budget-mb      (Default: 64) Memory budget in MiB for buffered record
+                          batches.
+
+  --help                  Display this help screen.
+
+  --version               Display version information.
 ```
 
 ## Usage examples
 
 ```sh
-dbtransfer exec --job jobs/report.json
+dbtransfer exec --provider postgresql --connection $DATABASE --sql 'select id, total from orders' --format jsonl
 ```
 
 ```sh
-dbtransfer exec --job jobs/schema-migration.json
+dbtransfer exec --provider sqlserver --connection $DATABASE --sql 'select Id, Name from dbo.Jobs' --format csv --output jobs.csv
 ```

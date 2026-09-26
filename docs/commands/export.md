@@ -13,40 +13,50 @@ Export database records to a file or stdout.
 DbTransfer <version>
 Copyright (C) 2026 DbTransfer
 
-  --provider            Required. Source provider: postgresql, sqlserver, mysql,
-                        or oracle.
+  --provider              Required. Source provider: postgresql, sqlserver,
+                          mysql, or oracle.
 
-  --connection          Required. Source database connection string.
+  --connection            Required. Source database connection string.
 
-  --query               Required. Source SQL query; it is executed without
-                        rewriting.
+  --query                 Required. Source SQL query; it is executed without
+                          rewriting.
 
-  --output              (Default: -) Output file, or '-' for stdout.
+  --output                (Default: -) Output file, or '-' for stdout.
 
-  --format              (Default: jsonl) Output format: csv, json, jsonl, or
-                        extended-json.
+  --format                (Default: jsonl) Output format: csv, json, jsonl, or
+                          extended-json.
 
-  --script              Executable record hook. Receives one JSON object on
-                        stdin and returns one on stdout.
+  --script                Executable record hook. Receives one JSON object on
+                          stdin and returns one on stdout.
 
-  --script-arguments    Arguments passed to the record-hook executable.
+  --script-arguments      Arguments passed to the record-hook executable.
 
-  --job                 Path to a job definition.
+  --log-file              Log file path. Supports {Date}, {UtcDate}, and
+                          {ProcessId} placeholders.
 
-  --batch-size          (Default: 1000) Maximum number of records in a batch.
+  --log-directory         Directory for daily dbtransfer log files.
 
-  --max-batch-bytes     (Default: 4194304) Maximum estimated payload bytes in a
-                        batch.
+  --log-retention-days    (Default: 30) Delete rolling log files older than this
+                          many days.
 
-  --buffer-batches      (Default: 2) Maximum number of batches buffered between
-                        pipeline stages.
+  --progress-interval     (Default: 10000) Report progress after approximately
+                          this many written records; 0 disables progress
+                          reports.
 
-  --memory-budget-mb    (Default: 64) Memory budget in MiB for buffered record
-                        batches.
+  --batch-size            (Default: 1000) Maximum number of records in a batch.
 
-  --help                Display this help screen.
+  --max-batch-bytes       (Default: 4194304) Maximum estimated payload bytes in
+                          a batch.
 
-  --version             Display version information.
+  --buffer-batches        (Default: 2) Maximum number of batches buffered
+                          between pipeline stages.
+
+  --memory-budget-mb      (Default: 64) Memory budget in MiB for buffered record
+                          batches.
+
+  --help                  Display this help screen.
+
+  --version               Display version information.
 ```
 
 ## Usage examples

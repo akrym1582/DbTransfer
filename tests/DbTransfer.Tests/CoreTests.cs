@@ -60,6 +60,26 @@ public sealed class CoreTests
         Assert.Equal(WriteStatus.Succeeded, result.Status);
     }
 
+    [Fact]
+    public async Task Engine_reports_cumulative_progress_after_each_written_batch()
+    {
+        var schema = new RecordSchema([new("id", typeof(int), false)]);
+        var reports = new List<(long Read, long Written)>();
+        await new TransferEngine().RunAsync(
+            new FakeSource(schema, 3),
+            new FakeSink(),
+            new TransferOptions
+            {
+                BufferBatches = 1,
+                MemoryBudgetBytes = 10,
+                Progress = (read, written) => reports.Add((read, written)),
+            });
+
+        Assert.Equal(3, reports.Count);
+        Assert.Equal(3, reports[^1].Written);
+        Assert.All(reports, report => Assert.True(report.Read >= report.Written));
+    }
+
     private sealed class FakeSource(RecordSchema schema, int count) : ISourceConnector
     {
         public ConnectorCapabilities Capabilities => ConnectorCapabilities.Resume;
