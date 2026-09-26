@@ -7,3 +7,15 @@ dotnet_diagnostic.SA1200.severity = none
 dotnet_diagnostic.SA1309.severity = none
 dotnet_diagnostic.SA1629.severity = none
 dotnet_diagnostic.SA1633.severity = none
+
+# Public command option properties and provider interface implementations are self-describing.
+dotnet_diagnostic.CS1591.severity = none
+dotnet_diagnostic.SA1600.severity = none
+
+[src/DbTransfer/Core/RecordBatchDataReader.cs]
+# IDataReader's required member ordering and small forwarding members are intentionally compact.
+dotnet_diagnostic.SA1028.severity = none
+dotnet_diagnostic.SA1137.severity = none
+dotnet_diagnostic.SA1201.severity = none
+dotnet_diagnostic.SA1500.severity = none
+dotnet_diagnostic.SA1516.severity = none
