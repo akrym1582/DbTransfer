@@ -40,6 +40,18 @@ static async Task<int> RunCopyAsync(CopyOptions options)
                 CheckpointFile = options.Checkpoint,
                 Resume = options.Resume,
             };
+            databaseOptions = databaseOptions with
+            {
+                PlanFingerprint = TransferPlanFingerprint.Create(
+                    options.SourceProvider,
+                    options.SourceConnection,
+                    options.Query,
+                    options.DestinationProvider,
+                    options.DestinationConnection,
+                    databaseOptions,
+                    options.BatchSize,
+                    options.MaxBatchBytes),
+            };
             var result = await new DatabaseTransferRunner().RunAsync(
                 source,
                 sink,

@@ -20,20 +20,34 @@ public sealed class DatabaseTransferRunner
             throw new ArgumentException("Resume requires a checkpoint file.", nameof(databaseOptions));
         }
 
-        if (databaseOptions.Resume && databaseOptions.TransactionMode == TransactionMode.All)
+        if (!string.IsNullOrWhiteSpace(databaseOptions.CheckpointFile) && databaseOptions.TransactionMode != TransactionMode.Batch)
         {
-            throw new NotSupportedException("Resume cannot be combined with a whole-transfer transaction.");
+            throw new NotSupportedException("Checkpoints require batch transactions so each checkpoint describes a committed batch.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(databaseOptions.CheckpointFile) && string.IsNullOrWhiteSpace(databaseOptions.PlanFingerprint))
+        {
+            throw new ArgumentException("Checkpointing requires a transfer-plan fingerprint.", nameof(databaseOptions));
         }
 
         var schema = await source.GetSchemaAsync(cancellationToken).ConfigureAwait(false);
-        await sink.InitializeAsync(schema, databaseOptions, cancellationToken).ConfigureAwait(false);
         CheckpointStore? store = string.IsNullOrWhiteSpace(databaseOptions.CheckpointFile) ? null : new(databaseOptions.CheckpointFile);
         var checkpoint = databaseOptions.Resume && store is not null
             ? await store.LoadAsync(cancellationToken).ConfigureAwait(false) : null;
+        if (checkpoint is not null && !string.Equals(checkpoint.PlanFingerprint, databaseOptions.PlanFingerprint, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("The checkpoint does not match the current transfer plan.");
+        }
+
+        var initializationOptions = checkpoint is not null && databaseOptions.CreateTable
+            ? databaseOptions with { CreateTable = false }
+            : databaseOptions;
+        await sink.InitializeAsync(schema, initializationOptions, cancellationToken).ConfigureAwait(false);
         var startBatch = checkpoint?.BatchesCompleted ?? 0;
         var startRows = checkpoint?.RowsCompleted ?? 0;
         var sourceView = new SkippingSource(source, schema, startBatch);
-        ISinkConnector sinkView = store is null ? sink : new CheckpointingSink(sink, store, startBatch, startRows);
+        ISinkConnector sinkView = store is null ? sink : new CheckpointingSink(
+            sink, store, startBatch, startRows, databaseOptions.PlanFingerprint!);
         var result = await new TransferEngine().RunAsync(sourceView, sinkView, transferOptions, cancellationToken).ConfigureAwait(false);
         if (result.Status == WriteStatus.Succeeded)
         {
@@ -63,7 +77,12 @@ public sealed class DatabaseTransferRunner
         }
     }
 
-    private sealed class CheckpointingSink(IDatabaseSink inner, CheckpointStore store, long batches, long rows) : ISinkConnector
+    private sealed class CheckpointingSink(
+        IDatabaseSink inner,
+        CheckpointStore store,
+        long batches,
+        long rows,
+        string planFingerprint) : ISinkConnector
     {
         public ConnectorCapabilities Capabilities => inner.Capabilities | ConnectorCapabilities.Resume;
 
@@ -76,7 +95,8 @@ public sealed class DatabaseTransferRunner
             {
                 batches++;
                 rows += result.Succeeded;
-                await store.SaveAsync(new TransferCheckpoint(batches, rows, result.Continuation), cancellationToken).ConfigureAwait(false);
+                await store.SaveAsync(
+                    new TransferCheckpoint(batches, rows, result.Continuation, planFingerprint), cancellationToken).ConfigureAwait(false);
             }
 
             return result;

@@ -17,4 +17,7 @@ public sealed record DatabaseTransferOptions
     public string? CheckpointFile { get; init; }
 
     public bool Resume { get; init; }
+
+    /// <summary>Gets identifies every input that affects which rows are written and how batches are formed.</summary>
+    public string? PlanFingerprint { get; init; }
 }

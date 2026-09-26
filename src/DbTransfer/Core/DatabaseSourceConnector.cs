@@ -51,7 +51,7 @@ public sealed class DatabaseSourceConnector(
             var row = new object?[reader.FieldCount];
             for (var i = 0; i < row.Length; i++)
             {
-                row[i] = await reader.IsDBNullAsync(i, cancellationToken).ConfigureAwait(false) ? null : reader.GetValue(i);
+                row[i] = await ReadBoundedValueAsync(reader, i, maxBatchBytes - bytes, cancellationToken).ConfigureAwait(false);
                 bytes += Estimate(row[i]);
             }
 
@@ -95,4 +95,61 @@ public sealed class DatabaseSourceConnector(
         byte[] bytes => bytes.LongLength,
         _ => 16,
     };
+
+    private static async ValueTask<object?> ReadBoundedValueAsync(
+        DbDataReader currentReader,
+        int ordinal,
+        long remainingBytes,
+        CancellationToken cancellationToken)
+    {
+        if (await currentReader.IsDBNullAsync(ordinal, cancellationToken).ConfigureAwait(false))
+        {
+            return null;
+        }
+
+        if (remainingBytes < 1)
+        {
+            throw new InvalidOperationException("A source row exceeds the configured maximum batch bytes.");
+        }
+
+        var fieldType = currentReader.GetFieldType(ordinal);
+        if (fieldType == typeof(byte[]))
+        {
+            var length = currentReader.GetBytes(ordinal, 0, null, 0, 0);
+            EnsureLengthFits(length, remainingBytes);
+            var value = new byte[checked((int)length)];
+            var read = currentReader.GetBytes(ordinal, 0, value, 0, value.Length);
+            if (read != length)
+            {
+                throw new InvalidOperationException("The provider did not return the complete binary value.");
+            }
+
+            return value;
+        }
+
+        if (fieldType == typeof(string))
+        {
+            var characterCount = currentReader.GetChars(ordinal, 0, null, 0, 0);
+
+            // Every UTF-8 character occupies at least one byte, so this rejects oversized LOBs before allocation.
+            EnsureLengthFits(characterCount, remainingBytes);
+            var value = currentReader.GetString(ordinal);
+            if (System.Text.Encoding.UTF8.GetByteCount(value) > remainingBytes)
+            {
+                throw new InvalidOperationException("A source value exceeds the configured maximum batch bytes.");
+            }
+
+            return value;
+        }
+
+        return currentReader.GetValue(ordinal);
+    }
+
+    private static void EnsureLengthFits(long length, long remainingBytes)
+    {
+        if (length > remainingBytes || length > int.MaxValue)
+        {
+            throw new InvalidOperationException("A source value exceeds the configured maximum batch bytes.");
+        }
+    }
 }

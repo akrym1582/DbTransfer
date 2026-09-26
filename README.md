@@ -97,7 +97,7 @@ dotnet run --project src/DbTransfer -- copy \
   --transaction batch --checkpoint ./copy.checkpoint.json
 ```
 
-Use `--resume` with the same query, batch settings, and checkpoint to skip already committed batches. The query must have deterministic ordering and its source rows must not change between attempts. Whole-transfer transactions intentionally reject resume because no intermediate batch is committed. Native bulk is the default; `--no-native-bulk` selects parameterized inserts.
+Checkpoints require `--transaction batch`, ensuring every saved marker describes a fully committed batch. Use `--resume` with the same query, endpoints, destination, mappings, and batch settings to skip already committed batches; DbTransfer fingerprints these inputs and rejects mismatched checkpoint files. A resumed `--create-table` transfer reuses the destination created by its first attempt. The query must have deterministic ordering and its source rows must not change between attempts. Native bulk is the default; `--no-native-bulk` selects parameterized inserts.
 
 ## Architecture rules
 
