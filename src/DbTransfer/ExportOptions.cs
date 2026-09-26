@@ -4,13 +4,13 @@ using CommandLine;
 [Verb("export", HelpText = "Export database records to a file or stdout.")]
 public sealed class ExportOptions : CommonOptions
 {
-    [Option("provider", Required = true, HelpText = "Source provider: postgresql, sqlserver, mysql, or oracle.")]
+    [Option("provider", Required = true, HelpText = "Source provider (SQL, cosmosdb, mongodb, or azure-table-storage).")]
     public string Provider { get; init; } = string.Empty;
 
     [Option("connection", Required = true, HelpText = "Source database connection string.")]
     public string Connection { get; init; } = string.Empty;
 
-    [Option("query", Required = true, HelpText = "Source SQL query; it is executed without rewriting.")]
+    [Option("query", Required = true, HelpText = "SQL, or a document-provider location|query expression; never rewritten.")]
     public string Query { get; init; } = string.Empty;
 
     [Option("output", HelpText = "Output file, or '-' for stdout.", Default = "-")]

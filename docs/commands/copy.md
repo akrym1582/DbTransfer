@@ -17,16 +17,16 @@ See the [copy guide](../guides/copy.md) for a walkthrough, practical examples, a
 DbTransfer <version>
 Copyright (C) 2026 DbTransfer
 
-  --source-provider           Required. Source provider: postgresql, sqlserver,
-                              mysql, or oracle.
+  --source-provider           Required. Source provider (SQL, cosmosdb, mongodb,
+                              or azure-table-storage).
 
   --source-connection         Required. Source ADO.NET connection string.
 
-  --query                     Required. Source SQL query; it is executed without
-                              rewriting.
+  --query                     Required. SQL, or a document-provider
+                              location|query expression; never rewritten.
 
-  --destination-provider      Required. Destination provider: postgresql,
-                              sqlserver, mysql, or oracle.
+  --destination-provider      Required. Destination provider (SQL, cosmosdb,
+                              mongodb, or azure-table-storage).
 
   --destination-connection    Required. Destination ADO.NET connection string.
 

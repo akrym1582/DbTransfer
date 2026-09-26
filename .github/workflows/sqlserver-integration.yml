@@ -1,0 +1,40 @@
+name: SQL Server integration
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sqlserver-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: DbTransfer_Strong_Passw0rd!
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'DbTransfer_Strong_Passw0rd!' -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 20s
+    env:
+      DBTRANSFER_SQLSERVER_CONNECTION: Server=localhost,1433;Database=master;User ID=sa;Password=DbTransfer_Strong_Passw0rd!;Encrypt=True;TrustServerCertificate=True
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore dependencies
+        run: dotnet restore DbTransfer.slnx
+      - name: Run SQL Server integration tests
+        run: dotnet test DbTransfer.slnx --configuration Release --no-restore --filter Category=SqlServerIntegration

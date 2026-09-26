@@ -41,6 +41,18 @@ public sealed class DatabaseTransferTests
     [InlineData("oracle")]
     public void Provider_factory_accepts_supported_names(string provider) => Assert.NotNull(ConnectorFactory.Provider(provider));
 
+    /// <summary>Document database names and their convenient aliases resolve to sink connectors.</summary>
+    /// <param name="provider">A supported document provider name or alias.</param>
+    [Theory]
+    [InlineData("cosmosdb")]
+    [InlineData("cosmos")]
+    [InlineData("mongodb")]
+    [InlineData("mongo")]
+    [InlineData("azure-table-storage")]
+    [InlineData("azuretable")]
+    public void Sink_factory_accepts_document_provider_names(string provider) =>
+        Assert.NotNull(ConnectorFactory.Sink(provider, "unused"));
+
     /// <summary>The bulk adapter preserves nulls, names, types, and row order.</summary>
     [Fact]
     public void Batch_reader_streams_a_bounded_batch()

@@ -4,7 +4,7 @@ using CommandLine;
 [Verb("validate", HelpText = "Validate database connectivity and a query without transferring rows.")]
 public sealed class ValidateOptions : CommonOptions
 {
-    [Option("provider", Required = true, HelpText = "Provider: postgresql, sqlserver, mysql, or oracle.")]
+    [Option("provider", Required = true, HelpText = "Provider (SQL, cosmosdb, mongodb, or azure-table-storage).")]
     public string Provider { get; init; } = string.Empty;
 
     [Option("connection", Required = true, HelpText = "ADO.NET connection string.")]

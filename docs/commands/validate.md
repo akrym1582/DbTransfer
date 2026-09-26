@@ -17,8 +17,8 @@ See the [validate guide](../guides/validate.md) for a walkthrough, practical exa
 DbTransfer <version>
 Copyright (C) 2026 DbTransfer
 
-  --provider              Required. Provider: postgresql, sqlserver, mysql, or
-                          oracle.
+  --provider              Required. Provider (SQL, cosmosdb, mongodb, or
+                          azure-table-storage).
 
   --connection            Required. ADO.NET connection string.
 

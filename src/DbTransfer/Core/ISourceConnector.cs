@@ -16,3 +16,8 @@ public interface ISourceConnector
     /// <returns>接続元から読み取ったバッチを到着順に返す非同期シーケンスです。</returns>
     IAsyncEnumerable<RecordBatch> ReadAsync(CancellationToken cancellationToken);
 }
+
+/// <summary>A source connector that owns network resources.</summary>
+public interface IDatabaseSource : ISourceConnector, IAsyncDisposable
+{
+}

@@ -140,8 +140,8 @@ static async Task<int> RunValidateAsync(ValidateOptions options, ILogger logger)
     return 0;
 }
 
-static DatabaseSourceConnector NewSource(string provider, string connection, string query, CommonOptions options) =>
-    new(ConnectorFactory.Provider(provider), connection, query, options.BatchSize, options.MaxBatchBytes);
+static IDatabaseSource NewSource(string provider, string connection, string query, CommonOptions options) =>
+    ConnectorFactory.Source(provider, connection, query, options.BatchSize, options.MaxBatchBytes);
 
 static TransferOptions TransferSettings(CommonOptions options, ILogger logger, Stopwatch stopwatch)
 {

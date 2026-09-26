@@ -4,16 +4,16 @@ using CommandLine;
 [Verb("copy", HelpText = "Copy records between databases.")]
 public sealed class CopyOptions : CommonOptions
 {
-    [Option("source-provider", Required = true, HelpText = "Source provider: postgresql, sqlserver, mysql, or oracle.")]
+    [Option("source-provider", Required = true, HelpText = "Source provider (SQL, cosmosdb, mongodb, or azure-table-storage).")]
     public string SourceProvider { get; init; } = string.Empty;
 
     [Option("source-connection", Required = true, HelpText = "Source ADO.NET connection string.")]
     public string SourceConnection { get; init; } = string.Empty;
 
-    [Option("query", Required = true, HelpText = "Source SQL query; it is executed without rewriting.")]
+    [Option("query", Required = true, HelpText = "SQL, or a document-provider location|query expression; never rewritten.")]
     public string Query { get; init; } = string.Empty;
 
-    [Option("destination-provider", Required = true, HelpText = "Destination provider: postgresql, sqlserver, mysql, or oracle.")]
+    [Option("destination-provider", Required = true, HelpText = "Destination provider (SQL, cosmosdb, mongodb, or azure-table-storage).")]
     public string DestinationProvider { get; init; } = string.Empty;
 
     [Option("destination-connection", Required = true, HelpText = "Destination ADO.NET connection string.")]
