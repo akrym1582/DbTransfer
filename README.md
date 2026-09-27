@@ -168,3 +168,10 @@ See [`AGENTS.md`](AGENTS.md) for contribution rules. Agents implementing reposit
   ```powershell
   pwsh ./scripts/Generate-CommandDocs.ps1
   ```
+
+## Publishing a release
+
+Run the **Publish release** workflow manually from the default branch and select the
+version component to increment. The workflow tests and packages the project, commits
+the updated version, creates a matching tag, and attaches the package to a GitHub
+release. It does not publish the package to NuGet.org.
