@@ -115,9 +115,11 @@ dbtransfer import --input events.jsonl --format extended-json \
 
 JSON-array input is parsed incrementally rather than loaded as a complete document. Extended JSON uses one object per line and preserves `Int64`, `Decimal`, date/time, UUID, and binary values through `$numberLong`, `$numberDecimal`, `$date`, `$uuid`, and `$binary` wrappers. CSV includes a header row, represents null as `\N`, and escapes a literal `\N` as `\\N` so null and empty strings remain distinct.
 
-`--script <file.csx>` enables a schema-preserving, in-process C# record hook. DbTransfer ships its C# scripting runtime, compiles the file once, and exposes typed `Record`, `Arguments`, and `CancellationToken` globals; Python and external script runners are not required. See the [complete script contract](docs/csharp-scripts.md).
+`--script <file.csx>` or `--script-text '<C# code>'` enables a schema-preserving, in-process C# record hook. DbTransfer ships its C# scripting runtime, compiles the selected code once, and exposes typed `Record`, `Arguments`, and `CancellationToken` globals; Python and external script runners are not required. See the [complete script contract](docs/csharp-scripts.md).
 
 ### Database copy
+
+Commands that accept `--query` also accept `--query-file <path>` instead; specify exactly one. The file contents are passed to the provider unchanged.
 
 The `copy` command accepts an unmodified source query and a structured destination name. For example:
 

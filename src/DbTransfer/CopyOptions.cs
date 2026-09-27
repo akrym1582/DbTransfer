@@ -10,8 +10,11 @@ public sealed class CopyOptions : CommonOptions
     [Option("source-connection", Required = true, HelpText = "Source ADO.NET connection string.")]
     public string SourceConnection { get; init; } = string.Empty;
 
-    [Option("query", Required = true, HelpText = "SQL, or a document-provider location|query expression; never rewritten.")]
-    public string Query { get; init; } = string.Empty;
+    [Option("query", HelpText = "Inline SQL, or a document-provider location|query expression; never rewritten.")]
+    public string? Query { get; init; }
+
+    [Option("query-file", HelpText = "File containing the query; mutually exclusive with --query.")]
+    public string? QueryFile { get; init; }
 
     [Option("destination-provider", Required = true, HelpText = "Destination provider (SQL, cosmosdb, mongodb, or azure-table-storage).")]
     public string DestinationProvider { get; init; } = string.Empty;

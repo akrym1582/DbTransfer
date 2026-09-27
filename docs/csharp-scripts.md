@@ -1,6 +1,6 @@
 # In-process C# record scripts
 
-`export` and `import` accept `--script path/to/file.csx`. DbTransfer compiles the C# script once with Roslyn libraries shipped with the application and runs it in the DbTransfer process for every record. Python, `dotnet-script`, a shell, and a separately installed C# compiler are **not** required. A script is trusted code: it has the same operating-system permissions as DbTransfer, so never run an untrusted file.
+`export` and `import` accept either `--script path/to/file.csx` or `--script-text '<C# code>'`. Specify at most one; `--script` reads the code from the named file, while `--script-text` uses the option value directly. DbTransfer compiles the C# script once with Roslyn libraries shipped with the application and runs it in the DbTransfer process for every record. Python, `dotnet-script`, a shell, and a separately installed C# compiler are **not** required. A script is trusted code: it has the same operating-system permissions as DbTransfer, so never run an untrusted file.
 
 ## Values passed to a script
 

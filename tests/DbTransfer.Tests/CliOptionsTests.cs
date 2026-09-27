@@ -20,13 +20,10 @@ public sealed class CliOptionsTests
         Assert.DoesNotContain("job", options);
     }
 
-    [Theory]
-    [InlineData(typeof(ExecOptions))]
-    [InlineData(typeof(InspectOptions))]
-    [InlineData(typeof(ValidateOptions))]
-    public void Former_placeholder_commands_require_provider_connection_and_sql(Type optionType)
+    [Fact]
+    public void Exec_requires_provider_connection_and_sql()
     {
-        var names = optionType.GetProperties()
+        var names = typeof(ExecOptions).GetProperties()
             .Select(property => property.GetCustomAttributes(typeof(OptionAttribute), true).Cast<OptionAttribute>().SingleOrDefault())
             .OfType<OptionAttribute>()
             .Where(attribute => attribute.Required)
@@ -35,6 +32,38 @@ public sealed class CliOptionsTests
 
         Assert.Contains("provider", names);
         Assert.Contains("connection", names);
-        Assert.True(names.Contains("query") || names.Contains("sql"));
+        Assert.Contains("sql", names);
+    }
+
+    [Theory]
+    [InlineData(typeof(CopyOptions))]
+    [InlineData(typeof(ExportOptions))]
+    [InlineData(typeof(InspectOptions))]
+    [InlineData(typeof(ValidateOptions))]
+    public void Query_commands_offer_inline_and_file_options(Type optionType)
+    {
+        var names = optionType.GetProperties()
+            .Select(property => property.GetCustomAttributes(typeof(OptionAttribute), true).Cast<OptionAttribute>().SingleOrDefault())
+            .OfType<OptionAttribute>()
+            .Select(attribute => attribute.LongName)
+            .ToArray();
+
+        Assert.Contains("query", names);
+        Assert.Contains("query-file", names);
+    }
+
+    [Theory]
+    [InlineData(typeof(ExportOptions))]
+    [InlineData(typeof(ImportOptions))]
+    public void Script_commands_offer_file_and_inline_options(Type optionType)
+    {
+        var names = optionType.GetProperties()
+            .Select(property => property.GetCustomAttributes(typeof(OptionAttribute), true).Cast<OptionAttribute>().SingleOrDefault())
+            .OfType<OptionAttribute>()
+            .Select(attribute => attribute.LongName)
+            .ToArray();
+
+        Assert.Contains("script", names);
+        Assert.Contains("script-text", names);
     }
 }

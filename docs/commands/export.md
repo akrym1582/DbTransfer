@@ -24,8 +24,11 @@ Copyright (C) 2026 DbTransfer
 
   --connection            Required. Source database connection string.
 
-  --query                 Required. SQL, or a document-provider location|query
+  --query                 Inline SQL, or a document-provider location|query
                           expression; never rewritten.
+
+  --query-file            File containing the query; mutually exclusive with
+                          --query.
 
   --output                (Default: -) Output file, or '-' for stdout.
 
@@ -33,6 +36,9 @@ Copyright (C) 2026 DbTransfer
                           extended-json.
 
   --script                Path to an in-process C# record script (.csx).
+
+  --script-text           Inline in-process C# record script; mutually exclusive
+                          with --script.
 
   --script-argument       C# script argument in name=value form; available
                           through Arguments.

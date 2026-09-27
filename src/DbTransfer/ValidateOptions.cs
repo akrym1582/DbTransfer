@@ -10,6 +10,9 @@ public sealed class ValidateOptions : CommonOptions
     [Option("connection", Required = true, HelpText = "ADO.NET connection string.")]
     public string Connection { get; init; } = string.Empty;
 
-    [Option("query", Required = true, HelpText = "Query to validate and describe without transferring rows.")]
-    public string Query { get; init; } = string.Empty;
+    [Option("query", HelpText = "Inline query to validate and describe without transferring rows.")]
+    public string? Query { get; init; }
+
+    [Option("query-file", HelpText = "File containing the query; mutually exclusive with --query.")]
+    public string? QueryFile { get; init; }
 }

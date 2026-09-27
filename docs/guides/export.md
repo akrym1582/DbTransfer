@@ -1,5 +1,6 @@
 # Export database rows
 
+Supply a query inline with `--query`, or read it from a file with `--query-file <path>`. Specify exactly one; DbTransfer passes the resulting text to the provider without rewriting it.
 Use `export` to run a source query and stream its rows to a file or standard output. Supported providers are `postgresql`, `sqlserver`, `mysql`, and `oracle`; supported formats are `csv`, `json`, `jsonl`, and `extended-json`.
 
 ## First export
@@ -37,7 +38,7 @@ dbtransfer export --provider postgresql --connection "$DATABASE" \
 
 ## Transform each record
 
-Use `--script` for a schema-preserving value change after reading from the database and before formatting output. The value is a C# `.csx` file compiled and run inside DbTransfer; Python or another script runner is not required:
+Use `--script` for a schema-preserving value change after reading from the database and before formatting output. Use `--script <file.csx>` to read the code from a file, or `--script-text '<C# code>'` to supply it inline. Specify at most one. The script is compiled and run inside DbTransfer; Python or another script runner is not required:
 
 ```sh
 dbtransfer export --provider postgresql --connection "$DATABASE" \

@@ -10,8 +10,11 @@ public sealed class ExportOptions : CommonOptions
     [Option("connection", Required = true, HelpText = "Source database connection string.")]
     public string Connection { get; init; } = string.Empty;
 
-    [Option("query", Required = true, HelpText = "SQL, or a document-provider location|query expression; never rewritten.")]
-    public string Query { get; init; } = string.Empty;
+    [Option("query", HelpText = "Inline SQL, or a document-provider location|query expression; never rewritten.")]
+    public string? Query { get; init; }
+
+    [Option("query-file", HelpText = "File containing the query; mutually exclusive with --query.")]
+    public string? QueryFile { get; init; }
 
     [Option("output", HelpText = "Output file, or '-' for stdout.", Default = "-")]
     public string Output { get; init; } = "-";
@@ -21,6 +24,9 @@ public sealed class ExportOptions : CommonOptions
 
     [Option("script", HelpText = "Path to an in-process C# record script (.csx).")]
     public string? Script { get; init; }
+
+    [Option("script-text", HelpText = "Inline in-process C# record script; mutually exclusive with --script.")]
+    public string? ScriptText { get; init; }
 
     [Option("script-argument", Separator = ',', HelpText = "C# script argument in name=value form; available through Arguments.")]
     public IEnumerable<string> ScriptArguments { get; init; } = [];

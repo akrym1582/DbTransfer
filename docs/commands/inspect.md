@@ -23,8 +23,11 @@ Copyright (C) 2026 DbTransfer
 
   --connection            Required. ADO.NET connection string.
 
-  --query                 Required. Query whose result schema will be inspected
+  --query                 Inline query whose result schema will be inspected
                           without rewriting.
+
+  --query-file            File containing the query; mutually exclusive with
+                          --query.
 
   --log-file              Log file path. Supports {Date}, {UtcDate}, and
                           {ProcessId} placeholders.

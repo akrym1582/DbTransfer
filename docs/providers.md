@@ -18,7 +18,7 @@ DbTransfer accepts provider aliases case-insensitively and ignores hyphens. The 
 
 ## SQL providers
 
-The complete `--query`/`--sql` text is sent to the driver without rewriting. Use an explicit, deterministic `ORDER BY` for resumable copies. Destination names are parsed into structured components and each component is quoted; data values use parameters when native bulk is disabled.
+The complete `--query`/`--sql` text is sent to the driver without rewriting. Commands with `--query` alternatively accept `--query-file <path>`; specify exactly one query source. Use an explicit, deterministic `ORDER BY` for resumable copies. Destination names are parsed into structured components and each component is quoted; data values use parameters when native bulk is disabled.
 
 ```sh
 dbtransfer copy \

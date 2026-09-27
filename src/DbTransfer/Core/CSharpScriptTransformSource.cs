@@ -8,9 +8,10 @@ namespace DbTransfer.Core;
 /// <summary>Runs an in-process C# script once for each record while preserving its schema.</summary>
 public sealed class CSharpScriptTransformSource(
     ISourceConnector inner,
-    string scriptPath,
+    string scriptText,
     IReadOnlyDictionary<string, string> arguments,
-    int maxRecordBytes) : ISourceConnector
+    int maxRecordBytes,
+    string scriptName = "inline script") : ISourceConnector
 {
     public ConnectorCapabilities Capabilities => inner.Capabilities;
 
@@ -18,12 +19,11 @@ public sealed class CSharpScriptTransformSource(
 
     public async IAsyncEnumerable<RecordBatch> ReadAsync([EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(scriptPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(scriptText);
         ArgumentOutOfRangeException.ThrowIfLessThan(maxRecordBytes, 1);
 
-        var code = await File.ReadAllTextAsync(scriptPath, cancellationToken).ConfigureAwait(false);
         var script = CSharpScript.Create(
-            code,
+            scriptText,
             ScriptOptions.Default
                 .AddReferences(typeof(ScriptGlobals).Assembly)
                 .AddImports("System", "System.Collections.Generic", "System.Linq", "System.Threading", "System.Threading.Tasks"),
@@ -31,7 +31,7 @@ public sealed class CSharpScriptTransformSource(
         var diagnostics = script.Compile();
         if (diagnostics.Any(diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error))
         {
-            throw new InvalidDataException($"C# script '{scriptPath}' did not compile:{Environment.NewLine}{string.Join(Environment.NewLine, diagnostics)}");
+            throw new InvalidDataException($"C# script '{scriptName}' did not compile:{Environment.NewLine}{string.Join(Environment.NewLine, diagnostics)}");
         }
 
         var runner = script.CreateDelegate();
