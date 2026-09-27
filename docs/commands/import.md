@@ -44,6 +44,9 @@ Copyright (C) 2026 DbTransfer
 
   --script                    Path to an in-process C# record script (.csx).
 
+  --script-text               Inline in-process C# record script; mutually
+                              exclusive with --script.
+
   --script-argument           C# script argument in name=value form; available
                               through Arguments.
 

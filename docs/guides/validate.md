@@ -1,5 +1,6 @@
 # Validate connectivity and a query
 
+Supply a query inline with `--query`, or read it from a file with `--query-file <path>`. Specify exactly one; DbTransfer passes the resulting text to the provider without rewriting it.
 Use `validate` as a lightweight preflight check. It opens the selected database source and asks for the result schema, verifying that DbTransfer can connect and that the provider can describe the query without running a transfer.
 
 ## First validation

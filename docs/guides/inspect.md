@@ -1,5 +1,6 @@
 # Inspect a query result schema
 
+Supply a query inline with `--query`, or read it from a file with `--query-file <path>`. Specify exactly one; DbTransfer passes the resulting text to the provider without rewriting it.
 Use `inspect` to see the columns and .NET data types that DbTransfer discovers for a query before transferring its rows. The command writes a JSON description to stdout and a completion diagnostic to stderr.
 
 ## First inspection

@@ -124,7 +124,7 @@ public sealed class FileFormatIntegrationTests
         var schema = new RecordSchema([new RecordColumn("value", typeof(string))]);
         var inner = new TestSource(schema, [["before"]]);
         var path = await WriteScriptAsync("Record[\"value\"] = ((string)Record[\"value\"]!).ToUpperInvariant() + Arguments[\"suffix\"];");
-        var source = new CSharpScriptTransformSource(inner, path, new Dictionary<string, string> { ["suffix"] = "!" }, 1024);
+        var source = new CSharpScriptTransformSource(inner, await File.ReadAllTextAsync(path), new Dictionary<string, string> { ["suffix"] = "!" }, 1024, path);
         await using var enumerator = source.ReadAsync(CancellationToken.None).GetAsyncEnumerator();
 
         Assert.True(await enumerator.MoveNextAsync());
@@ -138,7 +138,7 @@ public sealed class FileFormatIntegrationTests
         var schema = new RecordSchema([new RecordColumn("value", typeof(string))]);
         var inner = new TestSource(schema, [[new string('a', 50)], [new string('b', 50)]]);
         var path = await WriteScriptAsync("Record[\"value\"] = Record[\"value\"];");
-        var source = new CSharpScriptTransformSource(inner, path, new Dictionary<string, string>(), 75);
+        var source = new CSharpScriptTransformSource(inner, await File.ReadAllTextAsync(path), new Dictionary<string, string>(), 75, path);
         var batches = await source.ReadAsync(CancellationToken.None).ToListAsync();
 
         Assert.Equal(2, batches.Count);
@@ -151,7 +151,7 @@ public sealed class FileFormatIntegrationTests
         var schema = new RecordSchema([new RecordColumn("value", typeof(string))]);
         var inner = new TestSource(schema, [["value"]]);
         var path = await WriteScriptAsync("Record[\"extra\"] = 1;");
-        var source = new CSharpScriptTransformSource(inner, path, new Dictionary<string, string>(), 1024);
+        var source = new CSharpScriptTransformSource(inner, await File.ReadAllTextAsync(path), new Dictionary<string, string>(), 1024, path);
 
         var exception = await Assert.ThrowsAsync<InvalidDataException>(async () =>
             await source.ReadAsync(CancellationToken.None).ToListAsync());

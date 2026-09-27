@@ -23,8 +23,11 @@ Copyright (C) 2026 DbTransfer
 
   --connection            Required. ADO.NET connection string.
 
-  --query                 Required. Query to validate and describe without
+  --query                 Inline query to validate and describe without
                           transferring rows.
+
+  --query-file            File containing the query; mutually exclusive with
+                          --query.
 
   --log-file              Log file path. Supports {Date}, {UtcDate}, and
                           {ProcessId} placeholders.

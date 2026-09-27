@@ -34,6 +34,9 @@ public sealed class ImportOptions : CommonOptions
     [Option("script", HelpText = "Path to an in-process C# record script (.csx).")]
     public string? Script { get; init; }
 
+    [Option("script-text", HelpText = "Inline in-process C# record script; mutually exclusive with --script.")]
+    public string? ScriptText { get; init; }
+
     [Option("script-argument", Separator = ',', HelpText = "C# script argument in name=value form; available through Arguments.")]
     public IEnumerable<string> ScriptArguments { get; init; } = [];
 }

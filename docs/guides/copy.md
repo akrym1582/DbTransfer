@@ -1,5 +1,6 @@
 # Copy data between databases
 
+Supply a query inline with `--query`, or read it from a file with `--query-file <path>`. Specify exactly one; DbTransfer passes the resulting text to the provider without rewriting it.
 Use `copy` when the source and destination are both databases. Rows are streamed from the source query into the destination table, so DbTransfer does not need to hold the complete result set in memory.
 
 ## Before you begin

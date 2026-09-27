@@ -58,7 +58,13 @@ public sealed class CosmosDbIntegrationTests
         finally
         {
             using var client = new CosmosClient(connectionString);
-            await client.GetDatabase(database).DeleteAsync();
+            try
+            {
+                await client.GetDatabase(database).DeleteAsync();
+            }
+            catch (CosmosException exception) when (exception.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+            }
         }
     }
 }

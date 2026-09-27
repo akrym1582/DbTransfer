@@ -23,8 +23,11 @@ Copyright (C) 2026 DbTransfer
 
   --source-connection         Required. Source ADO.NET connection string.
 
-  --query                     Required. SQL, or a document-provider
-                              location|query expression; never rewritten.
+  --query                     Inline SQL, or a document-provider location|query
+                              expression; never rewritten.
+
+  --query-file                File containing the query; mutually exclusive with
+                              --query.
 
   --destination-provider      Required. Destination provider (SQL, cosmosdb,
                               mongodb, or azure-table-storage).

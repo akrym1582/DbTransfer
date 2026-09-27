@@ -45,9 +45,11 @@ static async Task<int> RunLoggedAsync(CommonOptions options, Func<ILogger, Task<
 static async Task<int> RunExportAsync(ExportOptions options, ILogger logger)
 {
     var stopwatch = Stopwatch.StartNew();
-    await using var databaseSource = NewSource(options.Provider, options.Connection, options.Query, options);
-    ISourceConnector source = string.IsNullOrWhiteSpace(options.Script) ? databaseSource
-        : new CSharpScriptTransformSource(databaseSource, options.Script, ParseNamedValues(options.ScriptArguments, "script argument"), checked((int)Math.Min(options.MaxBatchBytes, int.MaxValue)));
+    var query = await TextOptionResolver.ResolveRequiredAsync(options.Query, options.QueryFile, "query").ConfigureAwait(false);
+    var script = await TextOptionResolver.ResolveOptionalAsync(options.ScriptText, options.Script, "script-text", "script").ConfigureAwait(false);
+    await using var databaseSource = NewSource(options.Provider, options.Connection, query, options);
+    ISourceConnector source = script is null ? databaseSource
+        : new CSharpScriptTransformSource(databaseSource, script, ParseNamedValues(options.ScriptArguments, "script argument"), checked((int)Math.Min(options.MaxBatchBytes, int.MaxValue)), options.Script ?? "inline script");
     await using var output = OpenOutput(options.Output);
     await using var sink = new FileRecordSink(output, options.Format);
     var result = await new TransferEngine().RunAsync(source, sink, TransferSettings(options, logger, stopwatch)).ConfigureAwait(false);
@@ -58,10 +60,11 @@ static async Task<int> RunExportAsync(ExportOptions options, ILogger logger)
 static async Task<int> RunImportAsync(ImportOptions options, ILogger logger)
 {
     var stopwatch = Stopwatch.StartNew();
+    var script = await TextOptionResolver.ResolveOptionalAsync(options.ScriptText, options.Script, "script-text", "script").ConfigureAwait(false);
     await using var input = OpenInput(options.Input);
     await using var fileSource = new FileRecordSource(input, options.Format, options.BatchSize, options.MaxBatchBytes);
-    ISourceConnector source = string.IsNullOrWhiteSpace(options.Script) ? fileSource
-        : new CSharpScriptTransformSource(fileSource, options.Script, ParseNamedValues(options.ScriptArguments, "script argument"), checked((int)Math.Min(options.MaxBatchBytes, int.MaxValue)));
+    ISourceConnector source = script is null ? fileSource
+        : new CSharpScriptTransformSource(fileSource, script, ParseNamedValues(options.ScriptArguments, "script argument"), checked((int)Math.Min(options.MaxBatchBytes, int.MaxValue)), options.Script ?? "inline script");
     await using var sink = ConnectorFactory.Sink(options.DestinationProvider, options.DestinationConnection);
     var result = await new DatabaseTransferRunner().RunAsync(
         source,
@@ -74,7 +77,8 @@ static async Task<int> RunImportAsync(ImportOptions options, ILogger logger)
 static async Task<int> RunCopyAsync(CopyOptions options, ILogger logger)
 {
     var stopwatch = Stopwatch.StartNew();
-    await using var source = NewSource(options.SourceProvider, options.SourceConnection, options.Query, options);
+    var query = await TextOptionResolver.ResolveRequiredAsync(options.Query, options.QueryFile, "query").ConfigureAwait(false);
+    await using var source = NewSource(options.SourceProvider, options.SourceConnection, query, options);
     await using var sink = ConnectorFactory.Sink(options.DestinationProvider, options.DestinationConnection);
     var databaseOptions = DatabaseOptions(
         options.DestinationTable,
@@ -88,7 +92,7 @@ static async Task<int> RunCopyAsync(CopyOptions options, ILogger logger)
         PlanFingerprint = TransferPlanFingerprint.Create(
             options.SourceProvider,
             options.SourceConnection,
-            options.Query,
+            query,
             options.DestinationProvider,
             options.DestinationConnection,
             databaseOptions,
@@ -117,7 +121,8 @@ static async Task<int> RunExecAsync(ExecOptions options, ILogger logger)
 static async Task<int> RunInspectAsync(InspectOptions options, ILogger logger)
 {
     var stopwatch = Stopwatch.StartNew();
-    await using var source = NewSource(options.Provider, options.Connection, options.Query, options);
+    var query = await TextOptionResolver.ResolveRequiredAsync(options.Query, options.QueryFile, "query").ConfigureAwait(false);
+    await using var source = NewSource(options.Provider, options.Connection, query, options);
     var schema = await source.GetSchemaAsync(default).ConfigureAwait(false);
     var value = new
     {
@@ -134,7 +139,8 @@ static async Task<int> RunInspectAsync(InspectOptions options, ILogger logger)
 static async Task<int> RunValidateAsync(ValidateOptions options, ILogger logger)
 {
     var stopwatch = Stopwatch.StartNew();
-    await using var source = NewSource(options.Provider, options.Connection, options.Query, options);
+    var query = await TextOptionResolver.ResolveRequiredAsync(options.Query, options.QueryFile, "query").ConfigureAwait(false);
+    await using var source = NewSource(options.Provider, options.Connection, query, options);
     var schema = await source.GetSchemaAsync(default).ConfigureAwait(false);
     logger.Information("Validation succeeded: {ColumnCount} columns, elapsed {Elapsed}.", schema.Columns.Count, stopwatch.Elapsed);
     return 0;

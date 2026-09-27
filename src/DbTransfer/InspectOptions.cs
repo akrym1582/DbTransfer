@@ -10,6 +10,9 @@ public sealed class InspectOptions : CommonOptions
     [Option("connection", Required = true, HelpText = "ADO.NET connection string.")]
     public string Connection { get; init; } = string.Empty;
 
-    [Option("query", Required = true, HelpText = "Query whose result schema will be inspected without rewriting.")]
-    public string Query { get; init; } = string.Empty;
+    [Option("query", HelpText = "Inline query whose result schema will be inspected without rewriting.")]
+    public string? Query { get; init; }
+
+    [Option("query-file", HelpText = "File containing the query; mutually exclusive with --query.")]
+    public string? QueryFile { get; init; }
 }
